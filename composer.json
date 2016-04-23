@@ -1,0 +1,26 @@
+{
+    "name": "huntie/laravel-simple-jsonapi",
+    "description": "JSON API support for Laravel",
+    "homepage": "https://github.com/huntie/laravel-simple-jsonapi",
+    "license": "MIT",
+    "type": "library",
+    "authors": [
+        {
+            "name": "Alex Hunt",
+            "email": "hello@alexhunt.io",
+            "homepage": "https://alexhunt.io"
+        }
+    ],
+    "require": {
+        "php": ">=5.5.9",
+        "illuminate/database": ">=5.2.0",
+        "illuminate/http": ">=5.2.0",
+        "illuminate/routing": ">=5.2.0",
+        "illuminate/support": ">=5.2.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "Huntie\\JsonApi\\": "src/"
+        }
+    }
+}
