@@ -38,14 +38,10 @@ abstract class JsonApiController extends Controller
      */
     public function indexAction(Request $request)
     {
-        $data = [];
         $records = $this->getModel()->all();
+        $params = $this->getRequestParameters($request);
 
-        foreach ($records as $record) {
-            $data[] = $this->transformRecord($record);
-        }
-
-        return new JsonApiResponse(compact('data'));
+        return new JsonApiResponse($this->transformCollection($records, $params['fields']));
     }
 
     /**
@@ -59,9 +55,9 @@ abstract class JsonApiController extends Controller
     public function showAction(Request $request, $record)
     {
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
-        $data = $this->transformRecord($record);
+        $params = $this->getRequestParameters($request);
 
-        return new JsonApiResponse(compact('data'));
+        return new JsonApiResponse($this->transformRecord($record, $params['fields'], $params['include']));
     }
 
     /**
@@ -79,26 +75,103 @@ abstract class JsonApiController extends Controller
     }
 
     /**
-     * Transform a model instance into a JSON API object.
+     * Return any JSON API resource parameters from a request.
      *
-     * @param Model      $record
-     * @param array|null $include Relations to include
-     * @param array|null $fields  Field names of attributes to limit to
+     * @param Request $request
      *
      * @return array
      */
-    protected function transformRecord($record, array $include = [], array $fields = [])
+    protected function getRequestParameters($request)
     {
-        $attributes = $record->toArray();
+        return [
+            'fields' => $this->getRequestQuerySet($request, 'fields.' . $this->getModelType()),
+            'include' => $this->getRequestQuerySet($request, 'include'),
+        ];
+    }
+
+    /**
+     * Return any comma separated values in a request query field as an array.
+     *
+     * @param Request $request
+     * @param string  $key
+     *
+     * @return array
+     */
+    protected function getRequestQuerySet($request, $key)
+    {
+        return preg_split('/,/', $request->input($key), null, PREG_SPLIT_NO_EMPTY);
+    }
+
+    /**
+     * Transform a set of models into a JSON API collection.
+     *
+     * @param \Illuminate\Support\Collection $records
+     * @param array                          $fields
+     *
+     * @return array
+     */
+    protected function transformCollection($records, array $fields = [])
+    {
+        $data = [];
+
+        foreach ($records as $record) {
+            $data[] = $this->transformRecord($record, $fields)['data'];
+        }
+
+        return compact('data');
+    }
+
+    /**
+     * Transform a model instance into a JSON API object.
+     *
+     * @param Model      $record
+     * @param array|null $fields  Field names of attributes to limit to
+     * @param array|null $include Relations to include
+     *
+     * @return array
+     */
+    protected function transformRecord($record, array $fields = [], array $include = [])
+    {
+        $relations = array_unique(array_merge($record->getRelations(), $include));
+        $attributes = $record->load($relations)->toArray();
+        $relationships = [];
+        $included = [];
+
+        foreach ($relations as $relation) {
+            $relationships[$relation] = [
+                'data' => []
+            ];
+
+            foreach (array_pull($attributes, $relation) as $relatedRecord) {
+                $relationships[$relation]['data'][] = [
+                    'type' => $relation,
+                    'id' => $relatedRecord['id'],
+                ];
+
+                if (in_array($relation, $include)) {
+                    $included[] = [
+                        'type' => $relation,
+                        'id' => $relatedRecord['id'],
+                        'attributes' => array_except($relatedRecord, ['id', 'pivot']),
+                    ];
+                }
+            }
+        }
 
         if (!empty($fields)) {
             $attributes = array_only($attributes, $fields);
         }
 
-        return [
+        $data = [
             'type' => $record->getTable(),
             'id' => $record->id,
             'attributes' => array_except($attributes, ['id']),
         ];
+
+        if (!empty($relationships)) {
+            $data['relationships'] = $relationships;
+        }
+
+        return !empty($included) ? compact('data', 'included') : compact('data');
     }
 }
