@@ -2,10 +2,11 @@
 
 namespace Huntie\JsonApi\Http\Controllers;
 
-use Huntie\JsonApi\Support\JsonApiErrors;
 use Huntie\JsonApi\Http\JsonApiResponse;
+use Huntie\JsonApi\Support\JsonApiErrors;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 
 abstract class JsonApiController extends Controller
@@ -45,6 +46,20 @@ abstract class JsonApiController extends Controller
     }
 
     /**
+     * Store a new record.
+     *
+     * @param Request $request
+     *
+     * @return JsonApiResponse
+     */
+    public function storeAction(Request $request)
+    {
+        $record = $this->getModel()->create((array) $request->input('data.attributes'));
+
+        return new JsonApiResponse($this->transformRecord($record), Response::HTTP_CREATED);
+    }
+
+    /**
      * Return a specified record.
      *
      * @param Request   $request
@@ -58,6 +73,38 @@ abstract class JsonApiController extends Controller
         $params = $this->getRequestParameters($request);
 
         return new JsonApiResponse($this->transformRecord($record, $params['fields'], $params['include']));
+    }
+
+    /**
+     * Update a specified record.
+     *
+     * @param Request   $request
+     * @param Model|int $record
+     *
+     * @return JsonApiResponse
+     */
+    public function updateAction(Request $request, $record)
+    {
+        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $record->update((array) $request->input('data.attributes'));
+
+        return $this->showAction($request, $record);
+    }
+
+    /**
+     * Destroy a specified record.
+     *
+     * @param Request   $request
+     * @param Model|int $record
+     *
+     * @return JsonApiResponse
+     */
+    public function destroyAction(Request $request, $record)
+    {
+        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $record->delete();
+
+        return new JsonApiResponse(null, Response::HTTP_NO_CONTENT);
     }
 
     /**
