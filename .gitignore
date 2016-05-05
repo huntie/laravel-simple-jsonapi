@@ -1,2 +1,6 @@
 # Editor files
 *.sublime-*
+
+# Installed packages
+/vendor
+composer.lock
