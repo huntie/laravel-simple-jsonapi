@@ -49,6 +49,10 @@ abstract class JsonApiController extends Controller
             $records = $records->orderby($column, $direction);
         }
 
+        foreach ($params['filter'] as $attribute => $value) {
+            $records = $records->where($attribute, '=', $value);
+        }
+
         try {
             $records = $records->get();
         } catch (QueryException $e) {
@@ -147,6 +151,7 @@ abstract class JsonApiController extends Controller
             'fields' => $this->getRequestQuerySet($request, 'fields.' . $this->getModelType()),
             'include' => $this->getRequestQuerySet($request, 'include'),
             'sort' => $this->getRequestQuerySet($request, 'sort'),
+            'filter' => (array) $request->input('filter'),
         ];
     }
 
