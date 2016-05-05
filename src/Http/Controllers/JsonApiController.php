@@ -4,6 +4,7 @@ namespace Huntie\JsonApi\Http\Controllers;
 
 use Huntie\JsonApi\Http\JsonApiResponse;
 use Huntie\JsonApi\Support\JsonApiErrors;
+use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
@@ -39,8 +40,20 @@ abstract class JsonApiController extends Controller
      */
     public function indexAction(Request $request)
     {
-        $records = $this->getModel()->all();
+        $records = $this->getModel()->newQuery();
         $params = $this->getRequestParameters($request);
+
+        foreach ($params['sort'] as $expression) {
+            $direction = substr($expression, 0, 1) === '-' ? 'desc' : 'asc';
+            $column = preg_replace('/^\-/', '', $expression);
+            $records = $records->orderby($column, $direction);
+        }
+
+        try {
+            $records = $records->get();
+        } catch (QueryException $e) {
+            return $this->error(Response::HTTP_BAD_REQUEST, 'Invalid query parameters');
+        }
 
         return new JsonApiResponse($this->transformCollection($records, $params['fields']));
     }
@@ -133,6 +146,7 @@ abstract class JsonApiController extends Controller
         return [
             'fields' => $this->getRequestQuerySet($request, 'fields.' . $this->getModelType()),
             'include' => $this->getRequestQuerySet($request, 'include'),
+            'sort' => $this->getRequestQuerySet($request, 'sort'),
         ];
     }
 
