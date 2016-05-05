@@ -209,16 +209,13 @@ abstract class JsonApiController extends Controller
             $attributes = array_only($attributes, $fields);
         }
 
-        $data = [
+        $data = array_filter([
             'type' => $record->getTable(),
             'id' => $record->id,
             'attributes' => array_except($attributes, ['id']),
-        ];
+            'relationships' => $relationships,
+        ]);
 
-        if (!empty($relationships)) {
-            $data['relationships'] = $relationships;
-        }
-
-        return !empty($included) ? compact('data', 'included') : compact('data');
+        return array_filter(compact('data', 'included'));
     }
 }
