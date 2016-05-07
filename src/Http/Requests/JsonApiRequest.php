@@ -25,7 +25,7 @@ abstract class JsonApiRequest extends FormRequest
                         'pointer' => str_replace('.', '/', $field),
                     ],
                     'title' => 'Invalid attribute',
-                    'detail' => $message,
+                    'detail' => str_replace('data.attributes.', '', $message),
                 ];
             }
         }
