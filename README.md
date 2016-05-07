@@ -14,3 +14,7 @@ An implementation of the [JSON API](http://jsonapi.org/) specification for Larav
 Install the latest pre-release using [Composer](https://getcomposer.org/):
 
     $ composer require huntie/laravel-simple-jsonapi
+
+## Contributing
+
+If you discover a problem or have a feature request, please [create an issue](https://github.com/huntie/laravel-simple-jsonapi/issues) or feel free to fork this repository and make improvements.
