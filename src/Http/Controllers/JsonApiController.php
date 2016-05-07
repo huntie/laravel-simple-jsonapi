@@ -125,6 +125,61 @@ abstract class JsonApiController extends Controller
     }
 
     /**
+     * Update a named many-to-one relationship association on a specified record.
+     * http://jsonapi.org/format/#crud-updating-to-one-relationships
+     *
+     * @param Request     $request
+     * @param Model|int   $record
+     * @param string      $relation
+     * @param string|null $foreignKey
+     *
+     * @return JsonApiResponse
+     */
+    public function updateToOneRelationship(Request $request, $record, $relation, $foreignKey = null)
+    {
+        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $data = (array) $request->input('data');
+
+        $record->update([($foreignKey ?: $relation . '_id') => $data['id']]);
+
+        return new JsonApiResponse(null, Response::HTTP_OK);
+    }
+
+    /**
+     * Update named many-to-many relationship entries on a specified record.
+     * http://jsonapi.org/format/#crud-updating-to-many-relationships
+     *
+     * @param Request   $request
+     * @param Model|int $record
+     * @param string    $relation
+     *
+     * @return JsonApiResponse
+     */
+    public function updateToManyRelationship(Request $request, $record, $relation)
+    {
+        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $relationships = (array) $request->input('data');
+        $items = [];
+
+        foreach ($relationships as $item) {
+            $items[$item['id']] = $item['attributes'];
+        }
+
+        switch ($request->method()) {
+            case 'PATCH':
+                $record->{$relation}()->sync($items);
+                break;
+            case 'POST':
+                $record->{$relation}()->sync($items, false);
+                break;
+            case 'DELETE':
+                $record->{$relation}()->detach(array_keys($items));
+        }
+
+        return new JsonApiResponse(null, Response::HTTP_OK);
+    }
+
+    /**
      * Return an instance of the resource by primary key.
      *
      * @param int $key
