@@ -19,30 +19,22 @@ trait JsonApiTransforms
     protected function transformRecord($record, array $fields = [], array $include = [])
     {
         $relations = array_unique(array_merge($record->getRelations(), $include));
-        $attributes = $record->load($relations)->toArray();
+        $record = $record->load($relations);
+
+        $attributes = $record->toArray();
         $relationships = [];
         $included = [];
 
         foreach ($relations as $relation) {
-            $relationships[$relation] = [
-                'data' => []
-            ];
+            $relatedRecords = $record->{$relation};
+            $relationships[$relation] = $this->transformCollectionIds($relatedRecords);
 
-            foreach (array_pull($attributes, $relation) as $relatedRecord) {
-                $relationships[$relation]['data'][] = [
-                    'type' => $relation,
-                    'id' => $relatedRecord['id'],
-                ];
-
-                if (in_array($relation, $include)) {
-                    $included[] = [
-                        'type' => $relation,
-                        'id' => $relatedRecord['id'],
-                        'attributes' => array_except($relatedRecord, ['id', 'pivot']),
-                    ];
-                }
+            if (in_array($relation, $include)) {
+                $included[] = $this->transformCollectionSimple($relatedRecords);
             }
         }
+
+        array_forget($attributes, $relations);
 
         if (!empty($fields)) {
             $attributes = array_only($attributes, $fields);
@@ -59,6 +51,27 @@ trait JsonApiTransforms
     }
 
     /**
+     * Transform a model instance into a JSON API object without additonal data.
+     *
+     * @param \Illuminate\Database\Eloquent\Model $record
+     *
+     * @return array
+     */
+    protected function transformRecordSimple($record)
+    {
+        $attributes = array_diff_key($record->toArray(), $record->getRelations());
+        $attributes = array_except($attributes, ['id']);
+
+        return [
+            'data' => [
+                'type' => $record->getTable(),
+                'id' => $record->id,
+                'attributes' => $attributes,
+            ]
+        ];
+    }
+
+    /**
      * Transform a set of models into a JSON API collection.
      *
      * @param \Illuminate\Support\Collection $records
@@ -70,6 +83,22 @@ trait JsonApiTransforms
     {
         $data = $records->map(function ($record) use ($fields) {
             return $this->transformRecord($record, $fields)['data'];
+        });
+
+        return compact('data');
+    }
+
+    /**
+     * Transform a set of models into a JSON API colleciton without additional data.
+     *
+     * @param \Illuminate\Support\Collection $records
+     *
+     * @return array
+     */
+    protected function transformCollectionSimple($records)
+    {
+        $data = $records->map(function ($record) {
+            return $this->transformRecordSimple($record)['data'];
         });
 
         return compact('data');
