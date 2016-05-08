@@ -4,15 +4,18 @@ namespace Huntie\JsonApi\Http\Controllers;
 
 use Huntie\JsonApi\Http\JsonApiResponse;
 use Huntie\JsonApi\Support\JsonApiErrors;
+use Huntie\JsonApi\Support\JsonApiTransforms;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 
 abstract class JsonApiController extends Controller
 {
-    use JsonApiErrors;
+    use JsonApiErrors, JsonApiTransforms;
 
     /**
      * Return the Eloquent Model for the resource.
@@ -32,6 +35,16 @@ abstract class JsonApiController extends Controller
     }
 
     /**
+     * The model relationships that can be updated.
+     *
+     * @return string
+     */
+    protected function getModelRelationships()
+    {
+        return [];
+    }
+
+    /**
      * Return a listing of the resource.
      *
      * @param Request $request
@@ -43,24 +56,8 @@ abstract class JsonApiController extends Controller
         $records = $this->getModel()->newQuery();
         $params = $this->getRequestParameters($request);
 
-        foreach ($params['sort'] as $expression) {
-            $direction = substr($expression, 0, 1) === '-' ? 'desc' : 'asc';
-            $column = preg_replace('/^\-/', '', $expression);
-            $records = $records->orderby($column, $direction);
-        }
-
-        foreach ($params['filter'] as $attribute => $value) {
-            if (is_numeric($value)) {
-                // Exact numeric match
-                $records = $records->where($attribute, $value);
-            } else if (in_array(strtolower($value), ['true', 'false'])) {
-                // Boolean match
-                $records = $records->where($attribute, filter_var($value, FILTER_VALIDATE_BOOLEAN));
-            } else {
-                // Partial string match
-                $records = $records->where($attribute, 'like', "%$value%");
-            }
-        }
+        $records = $this->sortQuery($records, $params['sort']);
+        $records = $this->filterQuery($records, $params['filter']);
 
         try {
             $records = $records->get();
@@ -81,6 +78,10 @@ abstract class JsonApiController extends Controller
     public function storeAction(Request $request)
     {
         $record = $this->getModel()->create((array) $request->input('data.attributes'));
+
+        if ($relationships = $request->input('data.relationships')) {
+            $this->updateRecordRelationships($record, (array) $relationships);
+        }
 
         return new JsonApiResponse($this->transformRecord($record), Response::HTTP_CREATED);
     }
@@ -114,6 +115,10 @@ abstract class JsonApiController extends Controller
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $record->update((array) $request->input('data.attributes'));
 
+        if ($relationships = $request->input('data.relationships')) {
+            $this->updateRecordRelationships($record, (array) $relationships);
+        }
+
         return $this->showAction($request, $record);
     }
 
@@ -134,6 +139,36 @@ abstract class JsonApiController extends Controller
     }
 
     /**
+     * Return a specified record relationship.
+     *
+     * @param Request   $request
+     * @param Model|int $record
+     * @param string    $relation
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *
+     * @return JsonApiResponse
+     */
+    public function relationshipAction(Request $request, $record, $relation)
+    {
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+
+        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $modelRelation = $this->getModelRelationships()[$relation];
+
+        if ($modelRelation instanceof BelongsTo) {
+            $relatedRecord = $record->{$relation};
+
+            return new JsonApiResponse([
+                'type' => $relatedRecord->getTable(),
+                'id' => $relatedRecord->id,
+            ]);
+        } else if ($modelRelation instanceof BelongsToMany) {
+            return new JsonApiResponse($this->transformCollectionIds($record->{$relation}));
+        }
+    }
+
+    /**
      * Update a named many-to-one relationship association on a specified record.
      * http://jsonapi.org/format/#crud-updating-to-one-relationships
      *
@@ -142,16 +177,20 @@ abstract class JsonApiController extends Controller
      * @param string      $relation
      * @param string|null $foreignKey
      *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *
      * @return JsonApiResponse
      */
-    public function updateToOneRelationship(Request $request, $record, $relation, $foreignKey = null)
+    public function updateToOneRelationshipAction(Request $request, $record, $relation, $foreignKey = null)
     {
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $data = (array) $request->input('data');
 
         $record->update([($foreignKey ?: $relation . '_id') => $data['id']]);
 
-        return new JsonApiResponse(null, Response::HTTP_OK);
+        return new JsonApiResponse();
     }
 
     /**
@@ -162,10 +201,14 @@ abstract class JsonApiController extends Controller
      * @param Model|int $record
      * @param string    $relation
      *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *
      * @return JsonApiResponse
      */
-    public function updateToManyRelationship(Request $request, $record, $relation)
+    public function updateToManyRelationshipAction(Request $request, $record, $relation)
     {
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $relationships = (array) $request->input('data');
         $items = [];
@@ -185,7 +228,7 @@ abstract class JsonApiController extends Controller
                 $record->{$relation}()->detach(array_keys($items));
         }
 
-        return new JsonApiResponse(null, Response::HTTP_OK);
+        return new JsonApiResponse();
     }
 
     /**
@@ -233,72 +276,69 @@ abstract class JsonApiController extends Controller
     }
 
     /**
-     * Transform a set of models into a JSON API collection.
+     * Sort a resource query by one or more attributes.
      *
-     * @param \Illuminate\Support\Collection $records
-     * @param array                          $fields
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array                                 $attributes
      *
-     * @return array
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    protected function transformCollection($records, array $fields = [])
+    protected function sortQuery($query, $attributes)
     {
-        $data = [];
-
-        foreach ($records as $record) {
-            $data[] = $this->transformRecord($record, $fields)['data'];
+        foreach ($attributes as $expression) {
+            $direction = substr($expression, 0, 1) === '-' ? 'desc' : 'asc';
+            $column = preg_replace('/^\-/', '', $expression);
+            $query = $query->orderBy($column, $direction);
         }
 
-        return compact('data');
+        return $query;
     }
 
     /**
-     * Transform a model instance into a JSON API object.
+     * Filter a resource query by one or more attributes.
      *
-     * @param Model      $record
-     * @param array|null $fields  Field names of attributes to limit to
-     * @param array|null $include Relations to include
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array                                 $attributes
      *
-     * @return array
+     * @return \Illuminate\Database\Eloquent\Builder
      */
-    protected function transformRecord($record, array $fields = [], array $include = [])
+    protected function filterQuery($query, $attributes)
     {
-        $relations = array_unique(array_merge($record->getRelations(), $include));
-        $attributes = $record->load($relations)->toArray();
-        $relationships = [];
-        $included = [];
-
-        foreach ($relations as $relation) {
-            $relationships[$relation] = [
-                'data' => []
-            ];
-
-            foreach (array_pull($attributes, $relation) as $relatedRecord) {
-                $relationships[$relation]['data'][] = [
-                    'type' => $relation,
-                    'id' => $relatedRecord['id'],
-                ];
-
-                if (in_array($relation, $include)) {
-                    $included[] = [
-                        'type' => $relation,
-                        'id' => $relatedRecord['id'],
-                        'attributes' => array_except($relatedRecord, ['id', 'pivot']),
-                    ];
-                }
+        foreach ($attributes as $column => $value) {
+            if (is_numeric($value)) {
+                // Exact numeric match
+                $query = $query->where($column, $value);
+            } else if (in_array(strtolower($value), ['true', 'false'])) {
+                // Boolean match
+                $query = $query->where($column, filter_var($value, FILTER_VALIDATE_BOOLEAN));
+            } else {
+                // Partial string match
+                $query = $query->where($column, 'like', '%' . $value . '%');
             }
         }
 
-        if (!empty($fields)) {
-            $attributes = array_only($attributes, $fields);
+        return $query;
+    }
+
+    /**
+     * Update one or more relationships on a model instance.
+     *
+     * @param Model $record
+     * @param array $relationships
+     */
+    protected function updateRecordRelationships($record, array $relationships)
+    {
+        $relationships = array_intersect_key($relationships, $this->getModelRelationships());
+
+        foreach ($relationships as $name => $relationship) {
+            $relation = $this->getModelRelationships()[$name];
+            $data = $relationship['data'];
+
+            if ($relation instanceof BelongsTo) {
+                $record->update([$relation->getForeignKey() => $data['id']]);
+            } else if ($relation instanceof BelongsToMany) {
+                $record->{$name}()->sync(array_pluck($data, 'id'));
+            }
         }
-
-        $data = array_filter([
-            'type' => $record->getTable(),
-            'id' => $record->id,
-            'attributes' => array_except($attributes, ['id']),
-            'relationships' => $relationships,
-        ]);
-
-        return array_filter(compact('data', 'included'));
     }
 }
