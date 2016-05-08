@@ -261,25 +261,6 @@ abstract class JsonApiController extends Controller
     }
 
     /**
-     * Transform a set of models into a JSON API collection.
-     *
-     * @param \Illuminate\Support\Collection $records
-     * @param array                          $fields
-     *
-     * @return array
-     */
-    protected function transformCollection($records, array $fields = [])
-    {
-        $data = [];
-
-        foreach ($records as $record) {
-            $data[] = $this->transformRecord($record, $fields)['data'];
-        }
-
-        return compact('data');
-    }
-
-    /**
      * Transform a model instance into a JSON API object.
      *
      * @param Model      $record
@@ -328,6 +309,43 @@ abstract class JsonApiController extends Controller
         ]);
 
         return array_filter(compact('data', 'included'));
+    }
+
+    /**
+     * Transform a set of models into a JSON API collection.
+     *
+     * @param \Illuminate\Support\Collection $records
+     * @param array                          $fields
+     *
+     * @return array
+     */
+    protected function transformCollection($records, array $fields = [])
+    {
+        $data = $records->map(function ($record) use ($fields) {
+            return $this->transformRecord($record, $fields)['data'];
+        });
+
+        return compact('data');
+    }
+
+    /**
+     * Transform a set of models into a collection of JSON API resource
+     * identifier objects.
+     *
+     * @param \Illuminate\Support\Collection $records
+     *
+     * @return array
+     */
+    protected function transformCollectionIds($records)
+    {
+        $data = $records->map(function ($record) {
+            return [
+                'type' => $record->getTable(),
+                'id' => $record->id,
+            ];
+        });
+
+        return compact('data');
     }
 
     /**
