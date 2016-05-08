@@ -55,24 +55,8 @@ abstract class JsonApiController extends Controller
         $records = $this->getModel()->newQuery();
         $params = $this->getRequestParameters($request);
 
-        foreach ($params['sort'] as $expression) {
-            $direction = substr($expression, 0, 1) === '-' ? 'desc' : 'asc';
-            $column = preg_replace('/^\-/', '', $expression);
-            $records = $records->orderby($column, $direction);
-        }
-
-        foreach ($params['filter'] as $attribute => $value) {
-            if (is_numeric($value)) {
-                // Exact numeric match
-                $records = $records->where($attribute, $value);
-            } else if (in_array(strtolower($value), ['true', 'false'])) {
-                // Boolean match
-                $records = $records->where($attribute, filter_var($value, FILTER_VALIDATE_BOOLEAN));
-            } else {
-                // Partial string match
-                $records = $records->where($attribute, 'like', "%$value%");
-            }
-        }
+        $records = $this->sortQuery($records, $params['sort']);
+        $records = $this->filterQuery($records, $params['filter']);
 
         try {
             $records = $records->get();
@@ -288,6 +272,51 @@ abstract class JsonApiController extends Controller
     protected function getRequestQuerySet($request, $key)
     {
         return preg_split('/,/', $request->input($key), null, PREG_SPLIT_NO_EMPTY);
+    }
+
+    /**
+     * Sort a resource query by one or more attributes.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array                                 $attributes
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function sortQuery($query, $attributes)
+    {
+        foreach ($attributes as $expression) {
+            $direction = substr($expression, 0, 1) === '-' ? 'desc' : 'asc';
+            $column = preg_replace('/^\-/', '', $expression);
+            $query = $query->orderBy($column, $direction);
+        }
+
+        return $query;
+    }
+
+    /**
+     * Filter a resource query by one or more attributes.
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @param array                                 $attributes
+     *
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    protected function filterQuery($query, $attributes)
+    {
+        foreach ($attributes as $column => $value) {
+            if (is_numeric($value)) {
+                // Exact numeric match
+                $query = $query->where($column, $value);
+            } else if (in_array(strtolower($value), ['true', 'false'])) {
+                // Boolean match
+                $query = $query->where($column, filter_var($value, FILTER_VALIDATE_BOOLEAN));
+            } else {
+                // Partial string match
+                $query = $query->where($column, 'like', '%' . $value . '%');
+            }
+        }
+
+        return $query;
     }
 
     /**
