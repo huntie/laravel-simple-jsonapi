@@ -50,7 +50,16 @@ abstract class JsonApiController extends Controller
         }
 
         foreach ($params['filter'] as $attribute => $value) {
-            $records = $records->where($attribute, '=', $value);
+            if (is_numeric($value)) {
+                // Exact numeric match
+                $records = $records->where($attribute, $value);
+            } else if (in_array(strtolower($value), ['true', 'false'])) {
+                // Boolean match
+                $records = $records->where($attribute, filter_var($value, FILTER_VALIDATE_BOOLEAN));
+            } else {
+                // Partial string match
+                $records = $records->where($attribute, 'like', "%$value%");
+            }
         }
 
         try {
