@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
  * @method showAction(Request $request, int $id)
  * @method updateAction(Request $request, int $id)
  * @method destroyAction(Request $request, int $id)
+ * @method relationshipAction(Request $request, int $id, string $relation)
  */
 trait JsonApiControllerActions
 {
@@ -76,5 +77,19 @@ trait JsonApiControllerActions
     public function destroy(Request $request, $id)
     {
         return $this->destroyAction($request, $id);
+    }
+
+    /**
+     * Return a specified record relationship.
+     *
+     * @param Request $request
+     * @param int     $id
+     * @param string  $relation
+     *
+     * @return \Huntie\JsonApi\Http\JsonApiResponse
+     */
+    public function relationship(Request $request, $id, $relation)
+    {
+        return $this->relationshipAction($request, $id, $relation);
     }
 }

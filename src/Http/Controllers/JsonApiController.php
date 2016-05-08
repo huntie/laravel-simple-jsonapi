@@ -154,6 +154,36 @@ abstract class JsonApiController extends Controller
     }
 
     /**
+     * Return a specified record relationship.
+     *
+     * @param Request   $request
+     * @param Model|int $record
+     * @param string    $relation
+     *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *
+     * @return JsonApiResponse
+     */
+    public function relationshipAction(Request $request, $record, $relation)
+    {
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+
+        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $modelRelation = $this->getModelRelationships()[$relation];
+
+        if ($modelRelation instanceof BelongsTo) {
+            $relatedRecord = $record->{$relation};
+
+            return new JsonApiResponse([
+                'type' => $relatedRecord->getTable(),
+                'id' => $relatedRecord->id,
+            ]);
+        } else if ($modelRelation instanceof BelongsToMany) {
+            return new JsonApiResponse($this->transformCollectionIds($record->{$relation}));
+        }
+    }
+
+    /**
      * Update a named many-to-one relationship association on a specified record.
      * http://jsonapi.org/format/#crud-updating-to-one-relationships
      *
