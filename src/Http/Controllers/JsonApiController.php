@@ -32,6 +32,16 @@ abstract class JsonApiController extends Controller
     }
 
     /**
+     * The model relationships that can be updated.
+     *
+     * @return string
+     */
+    protected function getModelRelationships()
+    {
+        return [];
+    }
+
+    /**
      * Return a listing of the resource.
      *
      * @param Request $request
@@ -142,16 +152,20 @@ abstract class JsonApiController extends Controller
      * @param string      $relation
      * @param string|null $foreignKey
      *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *
      * @return JsonApiResponse
      */
-    public function updateToOneRelationship(Request $request, $record, $relation, $foreignKey = null)
+    public function updateToOneRelationshipAction(Request $request, $record, $relation, $foreignKey = null)
     {
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $data = (array) $request->input('data');
 
         $record->update([($foreignKey ?: $relation . '_id') => $data['id']]);
 
-        return new JsonApiResponse(null, Response::HTTP_OK);
+        return new JsonApiResponse();
     }
 
     /**
@@ -162,10 +176,14 @@ abstract class JsonApiController extends Controller
      * @param Model|int $record
      * @param string    $relation
      *
+     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
+     *
      * @return JsonApiResponse
      */
-    public function updateToManyRelationship(Request $request, $record, $relation)
+    public function updateToManyRelationshipAction(Request $request, $record, $relation)
     {
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $relationships = (array) $request->input('data');
         $items = [];
@@ -185,7 +203,7 @@ abstract class JsonApiController extends Controller
                 $record->{$relation}()->detach(array_keys($items));
         }
 
-        return new JsonApiResponse(null, Response::HTTP_OK);
+        return new JsonApiResponse();
     }
 
     /**
