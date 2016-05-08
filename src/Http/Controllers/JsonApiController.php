@@ -6,6 +6,8 @@ use Huntie\JsonApi\Http\JsonApiResponse;
 use Huntie\JsonApi\Support\JsonApiErrors;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
@@ -92,6 +94,10 @@ abstract class JsonApiController extends Controller
     {
         $record = $this->getModel()->create((array) $request->input('data.attributes'));
 
+        if ($relationships = $request->input('data.relationships')) {
+            $this->updateRecordRelationships($record, (array) $relationships);
+        }
+
         return new JsonApiResponse($this->transformRecord($record), Response::HTTP_CREATED);
     }
 
@@ -123,6 +129,10 @@ abstract class JsonApiController extends Controller
     {
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $record->update((array) $request->input('data.attributes'));
+
+        if ($relationships = $request->input('data.relationships')) {
+            $this->updateRecordRelationships($record, (array) $relationships);
+        }
 
         return $this->showAction($request, $record);
     }
@@ -318,5 +328,27 @@ abstract class JsonApiController extends Controller
         ]);
 
         return array_filter(compact('data', 'included'));
+    }
+
+    /**
+     * Update one or more relationships on a model instance.
+     *
+     * @param Model $record
+     * @param array $relationships
+     */
+    protected function updateRecordRelationships($record, array $relationships)
+    {
+        $relationships = array_intersect_key($relationships, $this->getModelRelationships());
+
+        foreach ($relationships as $name => $relationship) {
+            $relation = $this->getModelRelationships()[$name];
+            $data = $relationship['data'];
+
+            if ($relation instanceof BelongsTo) {
+                $record->update([$relation->getForeignKey() => $data['id']]);
+            } else if ($relation instanceof BelongsToMany) {
+                $record->{$name}()->sync(array_pluck($data, 'id'));
+            }
+        }
     }
 }
