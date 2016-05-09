@@ -151,7 +151,7 @@ abstract class JsonApiController extends Controller
      */
     public function relationshipAction(Request $request, $record, $relation)
     {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $modelRelation = $this->getModelRelationships()[$relation];
@@ -183,7 +183,7 @@ abstract class JsonApiController extends Controller
      */
     public function updateToOneRelationshipAction(Request $request, $record, $relation, $foreignKey = null)
     {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $data = (array) $request->input('data');
@@ -207,7 +207,7 @@ abstract class JsonApiController extends Controller
      */
     public function updateToManyRelationshipAction(Request $request, $record, $relation)
     {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Reponse::HTTP_NOT_FOUND);
+        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $relationships = (array) $request->input('data');
