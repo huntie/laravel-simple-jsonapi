@@ -47,13 +47,14 @@ abstract class JsonApiController extends Controller
     /**
      * Return a listing of the resource.
      *
-     * @param Request $request
+     * @param Request                                    $request
+     * @param \Illuminate\Database\Eloquent\Builder|null $query   Custom resource query
      *
      * @return JsonApiResponse
      */
-    public function indexAction(Request $request)
+    public function indexAction(Request $request, $query = null)
     {
-        $records = $this->getModel()->newQuery();
+        $records = $query ?: $this->getModel()->newQuery();
         $params = $this->getRequestParameters($request);
 
         $records = $this->sortQuery($records, $params['sort']);
