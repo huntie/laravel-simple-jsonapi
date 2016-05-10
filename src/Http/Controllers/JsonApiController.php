@@ -219,7 +219,11 @@ abstract class JsonApiController extends Controller
         $items = [];
 
         foreach ($relationships as $item) {
-            $items[$item['id']] = $item['attributes'];
+            if (isset($item['attributes'])) {
+                $items[$item['id']] = $item['attributes'];
+            } else {
+                $items[] = $item['id'];
+            }
         }
 
         switch ($request->method()) {
