@@ -158,12 +158,16 @@ abstract class JsonApiController extends Controller
         $modelRelation = $this->getModelRelationships()[$relation];
 
         if ($modelRelation instanceof BelongsTo) {
-            $relatedRecord = $record->{$relation};
+            $data = null;
 
-            return new JsonApiResponse([
-                'type' => $relatedRecord->getTable(),
-                'id' => $relatedRecord->id,
-            ]);
+            if ($relatedRecord = $record->{$relation}) {
+                $data = [
+                    'type' => $relatedRecord->getTable(),
+                    'id' => $relatedRecord->id,
+                ];
+            }
+
+            return new JsonApiResponse(compact('data'));
         } else if ($modelRelation instanceof BelongsToMany) {
             return new JsonApiResponse($this->transformCollectionIds($record->{$relation}));
         }

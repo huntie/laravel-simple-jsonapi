@@ -30,11 +30,12 @@ trait JsonApiTransforms
             $relationships[$relation] = $this->transformCollectionIds($relatedRecords);
 
             if (in_array($relation, $include)) {
-                $included[] = $this->transformCollectionSimple($relatedRecords);
+                $included = array_merge($included, $this->transformCollectionSimple($relatedRecords)['data']);
             }
         }
 
         array_forget($attributes, $relations);
+        $included = array_filter($included);
 
         if (!empty($fields)) {
             $attributes = array_only($attributes, $fields);
@@ -83,7 +84,7 @@ trait JsonApiTransforms
     {
         $data = $records->map(function ($record) use ($fields) {
             return $this->transformRecord($record, $fields)['data'];
-        });
+        })->toArray();
 
         return compact('data');
     }
@@ -99,7 +100,7 @@ trait JsonApiTransforms
     {
         $data = $records->map(function ($record) {
             return $this->transformRecordSimple($record)['data'];
-        });
+        })->toArray();
 
         return compact('data');
     }
@@ -119,7 +120,7 @@ trait JsonApiTransforms
                 'type' => $record->getTable(),
                 'id' => $record->id,
             ];
-        });
+        })->toArray();
 
         return compact('data');
     }
