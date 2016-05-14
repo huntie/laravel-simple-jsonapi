@@ -76,6 +76,24 @@ Whenever a model is tranformed into a JSON API Object or Collection, the built-i
 
 This package uses these Eloquent features heavily – the examples demonstrate further how these are applied.
 
+## Examples
+
+### index
+
+### store
+
+### show
+
+### update
+
+### destroy
+
+## Relationships
+
+### Including relationships
+
+### Relationship endpoints
+
 ## Errors
 
 There are a number of contexts where you may return error responses as formatted JSON API Error Objects.
