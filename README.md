@@ -15,6 +15,67 @@ Install the latest pre-release using [Composer](https://getcomposer.org/):
 
     $ composer require huntie/laravel-simple-jsonapi
 
+## JsonApiController
+
+The main class in this package is `JsonApiController`, which provides a full set of create, read, update and delete actions for a given Eloquent Model. A bunch of query parameters are supported which will affect the JSON API Objects returned, and you can also fetch and update model relationships.
+
+### Basic usage
+
+#### 1. Define routes
+
+Add a [RESTful resource route](https://laravel.com/docs/5.2/controllers#restful-resource-controllers) for the target model in `routes.php`.
+
+```php
+Route::resource('users', 'UserController');
+```
+
+Using the `'only'` key here allows you to enable a only subset of resource endpoints before they hit the controller:
+
+```php
+Route::resource('users', 'UserController', [
+    'only' => ['index', 'show', 'update'],
+]);
+```
+
+#### 2. Add controller
+
+Our new controller for this resource needs to extend `JsonApiController` and use the `JsonApiControllerActions` trait. The base information to provide is the type of `Model` this controller is for, by implementing the abstract method `getModel`.
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\User;
+use Huntie\JsonApi\Http\Controllers\JsonApiController;
+use Huntie\JsonApi\Http\Controllers\JsonApiControllerActions;
+
+class UserController extends JsonApiController
+{
+    use JsonApiControllerActions;
+
+    /**
+     * Return the related Eloquent Model.
+     *
+     * @return Model
+     */
+    protected function getModel()
+    {
+        return new User();
+    }
+}
+```
+
+The trait `JsonApiControllerActions` is important. It defines each endpoint `index`, `store`, `show`, `update`, `destroy` at the class level and calls the relevant parent controller method, e.g. `indexAction`. This allows us to override particular controller actions, meaning we can specify additional parameters as well as a different type-hinted request class for [Form Request Validation](https://laravel.com/docs/5.2/validation#form-request-validation).
+
+The controller now will respond to each endpoint for this resource where a route has been defined.
+
+#### Attribute casting? Hidden properties?
+
+Whenever a model is tranformed into a JSON API Object or Collection, the built-in properties and methods defined on your Eloquent Model, such as `$casts`, `$hidden`, and `$appends` will apply automatically, removing the need for separate model tranformation logic. See [the Laravel docs](https://laravel.com/docs/5.2/eloquent) for more information on what is available.
+
+This package uses these Eloquent features heavily – the examples demonstrate further how these are applied.
+
 ## Errors
 
 There are a number of contexts where you may return error responses as formatted JSON API Error Objects.
