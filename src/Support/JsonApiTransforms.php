@@ -2,6 +2,8 @@
 
 namespace Huntie\JsonApi\Support;
 
+use Illuminate\Pagination\LengthAwarePaginator;
+
 /**
  * Transform Eloquent models and collections into JSON API objects.
  */
@@ -75,8 +77,8 @@ trait JsonApiTransforms
     /**
      * Transform a set of models into a JSON API collection.
      *
-     * @param \Illuminate\Support\Collection $records
-     * @param array                          $fields
+     * @param \Illuminate\Support\Collection|LengthAwarePaginator $records
+     * @param array                                               $fields
      *
      * @return array
      */
@@ -86,7 +88,16 @@ trait JsonApiTransforms
             return $this->transformRecord($record, $fields)['data'];
         })->toArray();
 
-        return compact('data');
+        $links = [];
+
+        if ($records instanceof LengthAwarePaginator) {
+            $links['first'] = $records->url(1);
+            $links['last'] = $records->url($records->lastPage());
+            $links['prev'] = $records->previousPageUrl();
+            $links['next'] = $records->nextPageUrl();
+        }
+
+        return array_filter(compact('data', 'links'));
     }
 
     /**

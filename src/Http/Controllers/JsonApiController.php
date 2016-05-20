@@ -61,7 +61,10 @@ abstract class JsonApiController extends Controller
         $records = $this->filterQuery($records, $params['filter']);
 
         try {
-            $records = $records->get();
+            $pageSize = min($this->getModel()->getPerPage(), $request->input('page.size'));
+            $pageNumber = $request->input('page.number') ?: 1;
+
+            $records = $records->paginate($pageSize, null, null, $pageNumber);
         } catch (QueryException $e) {
             return $this->error(Response::HTTP_BAD_REQUEST, 'Invalid query parameters');
         }
