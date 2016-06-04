@@ -97,7 +97,7 @@ trait JsonApiTransforms
             $links['next'] = $records->nextPageUrl();
         }
 
-        return array_filter(compact('data', 'links'));
+        return array_merge(compact('data'), array_filter(compact('links')));
     }
 
     /**
