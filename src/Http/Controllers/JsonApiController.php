@@ -64,7 +64,7 @@ abstract class JsonApiController extends Controller
             $pageSize = min($this->getModel()->getPerPage(), $request->input('page.size'));
             $pageNumber = $request->input('page.number') ?: 1;
 
-            $records = $records->paginate($pageSize, null, null, $pageNumber);
+            $records = $records->paginate($pageSize, null, 'page', $pageNumber);
         } catch (QueryException $e) {
             return $this->error(Response::HTTP_BAD_REQUEST, 'Invalid query parameters');
         }
