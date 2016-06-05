@@ -9,13 +9,15 @@ use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 
 abstract class JsonApiController extends Controller
 {
-    use JsonApiErrors, JsonApiTransforms;
+    use JsonApiErrors, JsonApiTransforms, AuthorizesRequests, ValidatesRequests;
 
     /**
      * Return the Eloquent Model for the resource.
