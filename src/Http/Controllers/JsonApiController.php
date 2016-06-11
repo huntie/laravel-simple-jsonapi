@@ -160,22 +160,8 @@ abstract class JsonApiController extends Controller
         abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
-        $modelRelation = $this->getModelRelationships()[$relation];
 
-        if ($modelRelation instanceof BelongsTo) {
-            $data = null;
-
-            if ($relatedRecord = $record->{$relation}) {
-                $data = [
-                    'type' => $relatedRecord->getTable(),
-                    'id' => $relatedRecord->id,
-                ];
-            }
-
-            return new JsonApiResponse(compact('data'));
-        } else if ($modelRelation instanceof BelongsToMany) {
-            return new JsonApiResponse($this->transformCollectionIds($record->{$relation}));
-        }
+        return new JsonApiResponse($this->transformRelationship($record->{$relation}));
     }
 
     /**

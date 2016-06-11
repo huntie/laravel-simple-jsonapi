@@ -2,7 +2,9 @@
 
 namespace Huntie\JsonApi\Support;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 
 /**
  * Transform Eloquent models and collections into JSON API objects.
@@ -12,9 +14,9 @@ trait JsonApiTransforms
     /**
      * Transform a model instance into a JSON API object.
      *
-     * @param \Illuminate\Database\Eloquent\Model $record
-     * @param array|null                          $fields  Field subset to return
-     * @param array|null                          $include Relations to include
+     * @param Model      $record
+     * @param array|null $fields  Field subset to return
+     * @param array|null $include Relations to include
      *
      * @return array
      */
@@ -25,19 +27,22 @@ trait JsonApiTransforms
 
         $attributes = $record->toArray();
         $relationships = [];
-        $included = [];
+        $included = collect([]);
 
         foreach ($relations as $relation) {
-            $relatedRecords = $record->{$relation};
-            $relationships[$relation] = $this->transformCollectionIds($relatedRecords);
+            $relationships[$relation] = $this->transformRelationship($record, $relation);
 
             if (in_array($relation, $include)) {
-                $included = array_merge($included, $this->transformCollectionSimple($relatedRecords)['data']);
+                if ($record->{$relation} instanceof Collection) {
+                    $included->merge($this->transformCollectionSimple($record->{$relation})['data']);
+                } else if ($record->{$relation} instanceof Model) {
+                    $included->push($this->transformRecordSimple($record->{$relation})['data']);
+                }
             }
         }
 
         array_forget($attributes, $relations);
-        $included = array_filter($included);
+        $included = array_filter($included->toArray());
 
         if (!empty($fields)) {
             $attributes = array_only($attributes, $fields);
@@ -56,7 +61,7 @@ trait JsonApiTransforms
     /**
      * Transform a model instance into a JSON API object without additonal data.
      *
-     * @param \Illuminate\Database\Eloquent\Model $record
+     * @param Model $record
      *
      * @return array
      */
@@ -75,10 +80,27 @@ trait JsonApiTransforms
     }
 
     /**
+     * Transform a model instance into a JSON API resource identifier.
+     *
+     * @param Model $record
+     *
+     * @return array
+     */
+    protected function transformRecordIdentifier($record)
+    {
+        return [
+            'data' => [
+                'type' => $record->getTable(),
+                'id' => $record->id,
+            ]
+        ];
+    }
+
+    /**
      * Transform a set of models into a JSON API collection.
      *
-     * @param \Illuminate\Support\Collection|LengthAwarePaginator $records
-     * @param array                                               $fields
+     * @param Collection|LengthAwarePaginator $records
+     * @param array                           $fields
      *
      * @return array
      */
@@ -101,9 +123,9 @@ trait JsonApiTransforms
     }
 
     /**
-     * Transform a set of models into a JSON API colleciton without additional data.
+     * Transform a set of models into a JSON API collection without additional data.
      *
-     * @param \Illuminate\Support\Collection $records
+     * @param Collection $records
      *
      * @return array
      */
@@ -120,18 +142,37 @@ trait JsonApiTransforms
      * Transform a set of models into a collection of JSON API resource
      * identifier objects.
      *
-     * @param \Illuminate\Support\Collection $records
+     * @param Collection $records
      *
      * @return array
      */
-    protected function transformCollectionIds($records)
+    protected function transformCollectionIdentifiers($records)
     {
         $data = $records->map(function ($record) {
-            return [
-                'type' => $record->getTable(),
-                'id' => $record->id,
-            ];
-        })->toArray();
+            return $this->transformRecordIdentifier($record)['data'];
+        });
+
+        return compact('data');
+    }
+
+    /**
+     * Transform a model relationship into a single, or collection of, JSON API
+     * resource identifier objects.
+     *
+     * @param Model  $record
+     * @param string $relation
+     *
+     * @return array
+     */
+    protected function transformRelationship($record, $relation)
+    {
+        $data = null;
+
+        if ($record->{$relation} instanceof Collection) {
+            return $this->transformCollectionIdentifiers($record->{$relation});
+        } else if ($record->{$relation} instanceof Model) {
+            return $this->transformRecordIdentifier($record->{$relation});
+        }
 
         return compact('data');
     }
