@@ -172,20 +172,20 @@ abstract class JsonApiController extends Controller
      * @param Request     $request
      * @param Model|int   $record
      * @param string      $relation
-     * @param string|null $foreignKey
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      *
      * @return JsonApiResponse
      */
-    public function updateToOneRelationshipAction(Request $request, $record, $relation, $foreignKey = null)
+    public function updateToOneRelationshipAction(Request $request, $record, $relation)
     {
         abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $relation = $this->getModelRelationships()[$relation];
         $data = (array) $request->input('data');
 
-        $record->{$foreignKey ?: $relation . '_id'} = $data['id'];
+        $record->{$relation->getForeignKey()} = $data['id'];
         $record->save();
 
         return new JsonApiResponse();
