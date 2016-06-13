@@ -71,7 +71,7 @@ abstract class JsonApiController extends Controller
             return $this->error(Response::HTTP_BAD_REQUEST, 'Invalid query parameters');
         }
 
-        return new JsonApiResponse($this->transformCollection($records, $params['fields']));
+        return new JsonApiResponse($this->transformCollection($records, $params['fields'], $params['include']));
     }
 
     /**
