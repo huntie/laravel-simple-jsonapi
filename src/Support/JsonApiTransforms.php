@@ -49,7 +49,7 @@ trait JsonApiTransforms
         }
 
         $data = array_filter([
-            'type' => $record->getTable(),
+            'type' => str_slug($record->getTable()),
             'id' => $record->id,
             'attributes' => array_except($attributes, ['id']),
             'relationships' => $relationships,
@@ -72,7 +72,7 @@ trait JsonApiTransforms
 
         return [
             'data' => [
-                'type' => $record->getTable(),
+                'type' => str_slug($record->getTable()),
                 'id' => $record->id,
                 'attributes' => $attributes,
             ]
@@ -90,7 +90,7 @@ trait JsonApiTransforms
     {
         return [
             'data' => [
-                'type' => $record->getTable(),
+                'type' => str_slug($record->getTable()),
                 'id' => $record->id,
             ]
         ];
