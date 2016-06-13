@@ -101,16 +101,25 @@ trait JsonApiTransforms
      *
      * @param Collection|LengthAwarePaginator $records
      * @param array                           $fields
+     * @param array|null                      $include
      *
      * @return array
      */
-    protected function transformCollection($records, array $fields = [])
+    protected function transformCollection($records, array $fields = [], array $include = [])
     {
-        $data = $records->map(function ($record) use ($fields) {
-            return $this->transformRecord($record, $fields)['data'];
-        })->toArray();
-
+        $data = [];
         $links = [];
+        $included = [];
+
+        foreach ($records as $record) {
+            $object = $this->transformRecord($record, $fields, $include);
+
+            if (isset($object['included'])) {
+                $included = array_merge($included, $object['included']);
+            }
+
+            $data[] = $object['data'];
+        }
 
         if ($records instanceof LengthAwarePaginator) {
             $links['first'] = $records->url(1);
@@ -119,7 +128,7 @@ trait JsonApiTransforms
             $links['next'] = $records->nextPageUrl();
         }
 
-        return array_merge(compact('data'), array_filter(compact('links')));
+        return array_merge(compact('data'), array_filter(compact('links', 'included')));
     }
 
     /**
