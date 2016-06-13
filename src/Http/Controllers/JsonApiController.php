@@ -119,7 +119,8 @@ abstract class JsonApiController extends Controller
     public function updateAction(Request $request, $record)
     {
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
-        $record->update((array) $request->input('data.attributes'));
+        $record->fill((array) $request->input('data.attributes'));
+        $record->save();
 
         if ($relationships = $request->input('data.relationships')) {
             $this->updateRecordRelationships($record, (array) $relationships);
@@ -171,20 +172,21 @@ abstract class JsonApiController extends Controller
      * @param Request     $request
      * @param Model|int   $record
      * @param string      $relation
-     * @param string|null $foreignKey
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      *
      * @return JsonApiResponse
      */
-    public function updateToOneRelationshipAction(Request $request, $record, $relation, $foreignKey = null)
+    public function updateToOneRelationshipAction(Request $request, $record, $relation)
     {
         abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $relation = $this->getModelRelationships()[$relation];
         $data = (array) $request->input('data');
 
-        $record->update([($foreignKey ?: $relation . '_id') => $data['id']]);
+        $record->{$relation->getForeignKey()} = $data['id'];
+        $record->save();
 
         return new JsonApiResponse();
     }
@@ -335,7 +337,8 @@ abstract class JsonApiController extends Controller
             $data = $relationship['data'];
 
             if ($relation instanceof BelongsTo) {
-                $record->update([$relation->getForeignKey() => $data['id']]);
+                $record->{$relation->getForeignKey()} = $data['id'];
+                $record->save();
             } else if ($relation instanceof BelongsToMany) {
                 $record->{$name}()->sync(array_pluck($data, 'id'));
             }

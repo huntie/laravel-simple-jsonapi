@@ -23,9 +23,8 @@ trait JsonApiTransforms
     protected function transformRecord($record, array $fields = [], array $include = [])
     {
         $relations = array_unique(array_merge($record->getRelations(), $include));
-        $record = $record->load($relations);
-
         $attributes = $record->toArray();
+        $record = $record->load($relations);
         $relationships = [];
         $included = collect([]);
 
