@@ -119,7 +119,8 @@ abstract class JsonApiController extends Controller
     public function updateAction(Request $request, $record)
     {
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
-        $record->update((array) $request->input('data.attributes'));
+        $record->fill((array) $request->input('data.attributes'));
+        $record->save();
 
         if ($relationships = $request->input('data.relationships')) {
             $this->updateRecordRelationships($record, (array) $relationships);
@@ -184,7 +185,8 @@ abstract class JsonApiController extends Controller
         $record = $record instanceof Model ? $record : $this->findModelInstance($record);
         $data = (array) $request->input('data');
 
-        $record->update([($foreignKey ?: $relation . '_id') => $data['id']]);
+        $record->{$foreignKey ?: $relation . '_id'} = $data['id'];
+        $record->save();
 
         return new JsonApiResponse();
     }
@@ -335,7 +337,8 @@ abstract class JsonApiController extends Controller
             $data = $relationship['data'];
 
             if ($relation instanceof BelongsTo) {
-                $record->update([$relation->getForeignKey() => $data['id']]);
+                $record->{$relation->getForeignKey()} = $data['id'];
+                $record->save();
             } else if ($relation instanceof BelongsToMany) {
                 $record->{$name}()->sync(array_pluck($data, 'id'));
             }
