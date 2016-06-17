@@ -120,6 +120,8 @@ trait JsonApiTransforms
             $data[] = $object['data'];
         }
 
+        $included = collect($included)->unique()->values()->toArray();
+
         if ($records instanceof LengthAwarePaginator) {
             $links['first'] = $records->url(1);
             $links['last'] = $records->url($records->lastPage());
