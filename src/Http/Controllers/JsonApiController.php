@@ -33,7 +33,7 @@ abstract class JsonApiController extends Controller
      */
     protected function getModelType()
     {
-        return $this->getModel()->getTable();
+        return str_slug($this->getModel()->getTable());
     }
 
     /**
