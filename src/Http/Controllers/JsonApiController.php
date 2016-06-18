@@ -2,6 +2,7 @@
 
 namespace Huntie\JsonApi\Http\Controllers;
 
+use Schema;
 use Huntie\JsonApi\Http\JsonApiResponse;
 use Huntie\JsonApi\Support\JsonApiErrors;
 use Huntie\JsonApi\Support\JsonApiTransforms;
@@ -315,7 +316,13 @@ abstract class JsonApiController extends Controller
      */
     protected function filterQuery($query, $attributes)
     {
+        $searchableColumns = Schema::getColumnListing($this->getModel()->getTable());
+
         foreach ($attributes as $column => $value) {
+            if (!in_array($column, $searchableColumns)) {
+                continue;
+            }
+
             if (is_numeric($value)) {
                 // Exact numeric match
                 $query = $query->where($column, $value);
