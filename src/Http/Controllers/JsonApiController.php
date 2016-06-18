@@ -7,6 +7,7 @@ use Huntie\JsonApi\Support\JsonApiErrors;
 use Huntie\JsonApi\Support\JsonApiTransforms;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
+use \Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -102,7 +103,7 @@ abstract class JsonApiController extends Controller
      */
     public function showAction(Request $request, $record)
     {
-        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $record = $this->findModelInstance($record);
         $params = $this->getRequestParameters($request);
 
         return new JsonApiResponse($this->transformRecord($record, $params['fields'], $params['include']));
@@ -118,7 +119,7 @@ abstract class JsonApiController extends Controller
      */
     public function updateAction(Request $request, $record)
     {
-        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $record = $this->findModelInstance($record);
         $record->fill((array) $request->input('data.attributes'));
         $record->save();
 
@@ -139,7 +140,7 @@ abstract class JsonApiController extends Controller
      */
     public function destroyAction(Request $request, $record)
     {
-        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $record = $this->findModelInstance($record);
         $record->delete();
 
         return new JsonApiResponse(null, Response::HTTP_NO_CONTENT);
@@ -160,7 +161,7 @@ abstract class JsonApiController extends Controller
     {
         abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
-        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $record = $this->findModelInstance($record);
 
         return new JsonApiResponse($this->transformRelationship($record->{$relation}));
     }
@@ -181,7 +182,7 @@ abstract class JsonApiController extends Controller
     {
         abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
-        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $record = $this->findModelInstance($record);
         $relation = $this->getModelRelationships()[$relation];
         $data = (array) $request->input('data');
 
@@ -207,7 +208,7 @@ abstract class JsonApiController extends Controller
     {
         abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
 
-        $record = $record instanceof Model ? $record : $this->findModelInstance($record);
+        $record = $this->findModelInstance($record);
         $relationships = (array) $request->input('data');
         $items = [];
 
@@ -234,17 +235,25 @@ abstract class JsonApiController extends Controller
     }
 
     /**
-     * Return an instance of the resource by primary key.
+     * Return existing instance of the resource or find by primary key.
      *
-     * @param int $key
+     * @param Model|int $record
      *
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException
+     * @throws ModelNotFoundException
      *
      * @return Model
      */
-    protected function findModelInstance($key)
+    protected function findModelInstance($record)
     {
-        return $this->getModel()->findOrFail($key);
+        if ($record instanceof Model) {
+            if (is_null($record->getKey())) {
+                throw new ModelNotFoundException();
+            }
+
+            return $record;
+        }
+
+        return $this->getModel()->findOrFail($record);
     }
 
     /**
