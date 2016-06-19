@@ -108,6 +108,7 @@ trait JsonApiTransforms
     {
         $data = [];
         $links = [];
+        $meta = [];
         $included = [];
 
         foreach ($records as $record) {
@@ -127,9 +128,10 @@ trait JsonApiTransforms
             $links['last'] = $records->url($records->lastPage());
             $links['prev'] = $records->previousPageUrl();
             $links['next'] = $records->nextPageUrl();
+            $meta['total'] = $records->total();
         }
 
-        return array_merge(compact('data'), array_filter(compact('links', 'included')));
+        return array_merge(compact('data'), array_filter(compact('links', 'included', 'meta')));
     }
 
     /**
