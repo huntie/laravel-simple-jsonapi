@@ -58,7 +58,7 @@ trait JsonApiTransforms
     }
 
     /**
-     * Transform a model instance into a JSON API object without additonal data.
+     * Transform a model instance into a JSON API object without additional data.
      *
      * @param Model $record
      *
