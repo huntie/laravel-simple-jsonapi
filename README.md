@@ -11,9 +11,19 @@ An implementation of the [JSON API](http://jsonapi.org/) specification for Larav
 
 ## Installation
 
-Install the latest pre-release using [Composer](https://getcomposer.org/):
+1.  Install the latest pre-release using [Composer](https://getcomposer.org/).
 
-    $ composer require huntie/laravel-simple-jsonapi
+        $ composer require huntie/laravel-simple-jsonapi
+
+2.  Add a reference to `JsonApiServiceProvider` under the `providers` array in `config/app.php`.
+
+    ```php
+    Huntie\JsonApi\JsonApiServiceProvider::class
+    ```
+
+3.  Run the following Artisan command to publish a local configuration file at `config/jsonapi.php`.
+
+        $ php artisan vendor:publish
 
 ## JsonApiController
 
@@ -70,7 +80,7 @@ The trait `JsonApiControllerActions` is important. It defines each endpoint `ind
 
 The controller now will respond to each endpoint for this resource where a route has been defined.
 
-#### Attribute casting? Hidden properties?
+#### Implicit model transformation
 
 Whenever a model is tranformed into a JSON API Object or Collection, the built-in properties and methods defined on your Eloquent Model, such as `$casts`, `$hidden`, and `$appends` will apply automatically, removing the need for separate model tranformation logic. See [the Laravel docs](https://laravel.com/docs/5.2/eloquent) for more information on what is available.
 
@@ -78,21 +88,7 @@ This package uses these Eloquent features heavily – the examples demonstrate f
 
 ## Examples
 
-### index
-
-### store
-
-### show
-
-### update
-
-### destroy
-
-## Relationships
-
-### Including relationships
-
-### Relationship endpoints
+Coming soon.
 
 ## Errors
 
