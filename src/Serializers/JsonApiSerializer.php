@@ -96,18 +96,6 @@ class JsonApiSerializer
     }
 
     /**
-     * Return a JSON API resource object for the primary record.
-     *
-     * @return array
-     */
-    public function toResourceObject()
-    {
-        return array_merge($this->toResourceIdentifier(), [
-            // TODO
-        ]);
-    }
-
-    /**
      * Return a JSON API resource identifier object for the primary record.
      *
      * @return array
@@ -118,6 +106,18 @@ class JsonApiSerializer
             'type' => $this->getRecordType(),
             'id' => $this->record->id,
         ];
+    }
+
+    /**
+     * Return a JSON API resource object for the primary record.
+     *
+     * @return array
+     */
+    public function toResourceObject()
+    {
+        return array_merge($this->toResourceIdentifier(), [
+            'attributes' => $this->transformRecordAttributes(),
+        ]);
     }
 
     /**
@@ -153,5 +153,22 @@ class JsonApiSerializer
     protected function getRecordType()
     {
         return str_slug(str_plural(get_class($this->record)));
+    }
+
+    /**
+     * Return the attribute object data for the primary record.
+     *
+     * @return array
+     */
+    protected function transformRecordAttributes()
+    {
+        $attributes = array_diff_key($this->record->toArray(), $this->record->getRelations());
+        $attributes = array_except($attributes, ['id']);
+
+        if (!empty($this->fields)) {
+            $attributes = array_only($attributes, $this->fields);
+        }
+
+        return $attributes;
     }
 }
