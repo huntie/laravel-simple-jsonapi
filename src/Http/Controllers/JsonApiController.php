@@ -41,7 +41,7 @@ abstract class JsonApiController extends Controller
     /**
      * The model relationships that can be updated.
      *
-     * @return string
+     * @return array
      */
     protected function getModelRelationships()
     {
