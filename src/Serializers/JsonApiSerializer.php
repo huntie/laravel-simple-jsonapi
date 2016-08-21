@@ -122,7 +122,7 @@ class JsonApiSerializer
 
         return array_merge($this->toResourceIdentifier(), array_filter([
             'attributes' => $this->transformRecordAttributes(),
-            'relationships' => $this->transformRecordRelations(),
+            'relationships' => $this->transformRecordRelations()->toArray(),
         ]));
     }
 
@@ -135,7 +135,7 @@ class JsonApiSerializer
     {
         return array_filter([
             'data' => $this->toResourceObject(),
-            'included' => $this->transformIncludedRelations(),
+            'included' => $this->transformIncludedRelations()->toArray(),
             'links' => $this->links->toArray(),
             'meta' => $this->meta->toArray(),
         ]);
@@ -184,25 +184,18 @@ class JsonApiSerializer
      * Return a collection of JSON API resource identifier objects by each
      * relation on the primary record.
      *
-     * @return array
+     * @return \Illuminate\Support\Collection
      */
     protected function transformRecordRelations()
     {
-        $relationships = [];
+        $relationships = collect([]);
 
         foreach ($this->relationships as $relation) {
-            $relation = $this->record->{$relation};
-            $data = [];
+            $data = $this->mapRelation($relation, function ($record) {
+                return (new static($record))->toResourceIdentifier();
+            });
 
-            if ($relation instanceof Collection) {
-                $data = array_map(function ($record) {
-                    return (new static($record))->toResourceIdentifier();
-                }, $relation);
-            } else if ($relation instanceof Model) {
-                $data = (new static($relation))->toResourceIdentifier();
-            }
-
-            $relationships[$relation] = compact('data');
+            $relationships = $relationships->merge([$relation => compact('data')]);
         }
 
         return $relationships;
@@ -212,18 +205,41 @@ class JsonApiSerializer
      * Return a collection of JSON API resource objects for each included
      * relationship.
      *
-     * @return array
+     * @return \Illuminate\Support\Collection
      */
     protected function transformIncludedRelations()
     {
         $included = collect([]);
 
         foreach ($this->include as $relation) {
-            $included = $included->merge(array_map(function ($record) {
-                return $record ? (new static($record))->toResourceObject() : null;
-            }, (array) $this->record->{$relation}));
+            $records = $this->mapRelation($relation, function ($record) {
+                return (new static($record))->toResourceObject();
+            });
+
+            $included = $included->merge(collect($records));
         }
 
-        return array_filter($included->toArray());
+        return $included;
+    }
+
+    /**
+     * Run a map over each item in a loaded relation on the primary record.
+     *
+     * @param string   $relation
+     * @param \Closure $callback
+     *
+     * @return Collection|Model|null
+     */
+    protected function mapRelation($relation, $callback)
+    {
+        $loadedRelation = $this->record->{$relation};
+
+        if ($loadedRelation instanceof Collection) {
+            return $loadedRelation->map($callback);
+        } else if ($loadedRelation instanceof Model) {
+            return $callback($loadedRelation);
+        }
+
+        return null;
     }
 }
