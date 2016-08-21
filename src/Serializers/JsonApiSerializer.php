@@ -112,7 +112,20 @@ class JsonApiSerializer
     }
 
     /**
-     * Return a JSON API resource object for the primary record.
+     * Return a base JSON API resource object for the primary record containing
+     * only immediate attributes.
+     *
+     * @return array
+     */
+    public function toBaseResourceObject()
+    {
+        return array_merge($this->toResourceIdentifier(), [
+            'attributes' => $this->transformRecordAttributes(),
+        ]);
+    }
+
+    /**
+     * Return a full JSON API resource object for the primary record.
      *
      * @return array
      */
@@ -120,10 +133,9 @@ class JsonApiSerializer
     {
         $this->record->load($this->relationships);
 
-        return array_merge($this->toResourceIdentifier(), array_filter([
-            'attributes' => $this->transformRecordAttributes(),
+        return array_merge($this->toBaseResourceObject(), [
             'relationships' => $this->transformRecordRelations()->toArray(),
-        ]));
+        ]);
     }
 
     /**
@@ -213,7 +225,7 @@ class JsonApiSerializer
 
         foreach ($this->include as $relation) {
             $records = $this->mapRelation($relation, function ($record) {
-                return (new static($record))->toResourceObject();
+                return (new static($record))->toBaseResourceObject();
             });
 
             $included = $included->merge(collect($records));
