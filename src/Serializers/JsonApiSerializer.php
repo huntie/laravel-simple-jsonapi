@@ -158,7 +158,9 @@ class JsonApiSerializer
      */
     protected function getRecordType()
     {
-        return str_slug(str_plural(get_class($this->record)));
+        $modelName = collect(explode('\\', get_class($this->record)))->last();
+
+        return snake_case(str_plural($modelName), '-');
     }
 
     /**
