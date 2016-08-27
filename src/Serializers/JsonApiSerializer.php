@@ -67,6 +67,7 @@ abstract class JsonApiSerializer
             'data' => $this->getPrimaryData(),
             'links' => $this->links->toArray(),
             'meta' => $this->meta->toArray(),
+            'included' => $this->getIncludedData(),
         ]);
     }
 
@@ -78,5 +79,15 @@ abstract class JsonApiSerializer
     public function serializeToJson()
     {
         return json_encode($this->serializeToObject());
+    }
+
+    /**
+     * Return any secondary included resource data.
+     *
+     * @return array
+     */
+    protected function getIncludedData()
+    {
+        return [];
     }
 }

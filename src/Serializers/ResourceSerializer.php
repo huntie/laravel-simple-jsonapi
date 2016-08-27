@@ -2,9 +2,6 @@
 
 namespace Huntie\JsonApi\Serializers;
 
-use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Collection;
-
 class ResourceSerializer extends JsonApiSerializer
 {
     /**
@@ -38,9 +35,9 @@ class ResourceSerializer extends JsonApiSerializer
     /**
      * Create a new JSON API resource serializer.
      *
-     * @param Model      $record  The model instance to serialise
-     * @param array|null $fields  Subset of fields to return
-     * @param array|null $include Relations to include
+     * @param \Illuminate\Database\Eloquent\Model $record  The model instance to serialise
+     * @param array|null                          $fields  Subset of fields to return
+     * @param array|null                          $include Relations to include
      */
     public function __construct($record, array $fields = [], array $include = [])
     {
@@ -103,15 +100,16 @@ class ResourceSerializer extends JsonApiSerializer
     }
 
     /**
-     * Serialise JSON API document to an array.
+     * Return a collection of JSON API resource objects for each included
+     * relationship.
      *
-     * @return array
+     * @return \Illuminate\Support\Collection
      */
-    public function serializeToObject()
+    public function getIncludedRecords()
     {
-        return array_filter(array_merge(parent::serializeToObject(), [
-            'included' => $this->transformIncludedRelations()->toArray(),
-        ]));
+        return collect($this->include)->map(function ($relation) {
+            return collect((new RelationshipSerializer($this->record, $relation))->toResourceCollection());
+        })->flatten(1);
     }
 
     /**
@@ -122,6 +120,16 @@ class ResourceSerializer extends JsonApiSerializer
     protected function getPrimaryData()
     {
         return $this->toResourceObject();
+    }
+
+    /**
+     * Return any secondary included resource data.
+     *
+     * @return array
+     */
+    protected function getIncludedData()
+    {
+        return $this->getIncludedRecords()->toArray();
     }
 
     /**
@@ -161,58 +169,10 @@ class ResourceSerializer extends JsonApiSerializer
      */
     protected function transformRecordRelations()
     {
-        $relationships = collect([]);
-
-        foreach ($this->relationships as $relation) {
-            $data = $this->mapRelation($relation, function ($record) {
-                return (new static($record))->toResourceIdentifier();
-            });
-
-            $relationships = $relationships->merge([$relation => compact('data')]);
-        }
-
-        return $relationships;
-    }
-
-    /**
-     * Return a collection of JSON API resource objects for each included
-     * relationship.
-     *
-     * @return \Illuminate\Support\Collection
-     */
-    protected function transformIncludedRelations()
-    {
-        $included = collect([]);
-
-        foreach ($this->include as $relation) {
-            $records = $this->mapRelation($relation, function ($record) {
-                return (new static($record))->toBaseResourceObject();
-            });
-
-            $included = $included->merge(collect($records));
-        }
-
-        return $included;
-    }
-
-    /**
-     * Run a map over each item in a loaded relation on the primary record.
-     *
-     * @param string   $relation
-     * @param \Closure $callback
-     *
-     * @return Collection|Model|null
-     */
-    protected function mapRelation($relation, $callback)
-    {
-        $loadedRelation = $this->record->{$relation};
-
-        if ($loadedRelation instanceof Collection) {
-            return $loadedRelation->map($callback);
-        } else if ($loadedRelation instanceof Model) {
-            return $callback($loadedRelation);
-        }
-
-        return null;
+        return collect($this->relationships)->combine(array_map(function ($relation) {
+            return [
+                'data' => (new RelationshipSerializer($this->record, $relation))->toResourceLinkage(),
+            ];
+        }, $this->relationships));
     }
 }
