@@ -2,7 +2,9 @@
 
 namespace Huntie\JsonApi\Serializers;
 
-abstract class JsonApiSerializer
+use JsonSerializable;
+
+abstract class JsonApiSerializer implements JsonSerializable
 {
     /**
      * Meta information to include.
@@ -72,13 +74,23 @@ abstract class JsonApiSerializer
     }
 
     /**
+     * Convert the object into something JSON serializable.
+     *
+     * @return array
+     */
+    public function jsonSerialize()
+    {
+        return $this->serializeToObject();
+    }
+
+    /**
      * Serialise JSON API document to a JSON string.
      *
      * @return array
      */
     public function serializeToJson()
     {
-        return json_encode($this->serializeToObject());
+        return json_encode($this->jsonSerialize());
     }
 
     /**
