@@ -4,11 +4,13 @@ namespace Huntie\JsonApi\Http\Controllers;
 
 use Schema;
 use Huntie\JsonApi\Http\JsonApiResponse;
+use Huntie\JsonApi\Serializers\CollectionSerializer;
+use Huntie\JsonApi\Serializers\RelationshipSerializer;
+use Huntie\JsonApi\Serializers\ResourceSerializer;
 use Huntie\JsonApi\Support\JsonApiErrors;
-use Huntie\JsonApi\Support\JsonApiTransforms;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
-use \Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -19,7 +21,9 @@ use Illuminate\Routing\Controller;
 
 abstract class JsonApiController extends Controller
 {
-    use JsonApiErrors, JsonApiTransforms, AuthorizesRequests, ValidatesRequests;
+    use JsonApiErrors;
+    use AuthorizesRequests;
+    use ValidatesRequests;
 
     /**
      * Return the Eloquent Model for the resource.
@@ -73,7 +77,7 @@ abstract class JsonApiController extends Controller
             return $this->error(Response::HTTP_BAD_REQUEST, 'Invalid query parameters');
         }
 
-        return new JsonApiResponse($this->transformCollection($records, $params['fields'], $params['include']));
+        return new JsonApiResponse(new CollectionSerializer($records, $params['fields'], $params['include']));
     }
 
     /**
@@ -91,7 +95,7 @@ abstract class JsonApiController extends Controller
             $this->updateRecordRelationships($record, (array) $relationships);
         }
 
-        return new JsonApiResponse($this->transformRecord($record), Response::HTTP_CREATED);
+        return new JsonApiResponse(new ResourceSerializer($record), Response::HTTP_CREATED);
     }
 
     /**
@@ -107,7 +111,7 @@ abstract class JsonApiController extends Controller
         $record = $this->findModelInstance($record);
         $params = $this->getRequestParameters($request);
 
-        return new JsonApiResponse($this->transformRecord($record, $params['fields'], $params['include']));
+        return new JsonApiResponse(new ResourceSerializer($record, $params['fields'], $params['include']));
     }
 
     /**
@@ -128,7 +132,7 @@ abstract class JsonApiController extends Controller
             $this->updateRecordRelationships($record, (array) $relationships);
         }
 
-        return $this->showAction($request, $record);
+        return new JsonApiResponse(new ResourceSerializer($record));
     }
 
     /**
@@ -164,7 +168,7 @@ abstract class JsonApiController extends Controller
 
         $record = $this->findModelInstance($record);
 
-        return new JsonApiResponse($this->transformRelationship($record->{$relation}));
+        return new JsonApiResponse(new RelationshipSerializer($record, $relation));
     }
 
     /**
@@ -190,7 +194,7 @@ abstract class JsonApiController extends Controller
         $record->{$relation->getForeignKey()} = $data['id'];
         $record->save();
 
-        return new JsonApiResponse();
+        return new JsonApiResponse(new RelationshipSerializer($record, $relation));
     }
 
     /**
@@ -232,7 +236,7 @@ abstract class JsonApiController extends Controller
                 $record->{$relation}()->detach(array_keys($items));
         }
 
-        return new JsonApiResponse();
+        return new JsonApiResponse(new RelationshipSerializer($record, $relation));
     }
 
     /**
