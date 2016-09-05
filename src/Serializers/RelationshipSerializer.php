@@ -40,7 +40,7 @@ class RelationshipSerializer extends JsonApiSerializer
      * Return a JSON API resource linkage representation, composed of a
      * resource identifier for each related record.
      *
-     * @return Collection|Model|null
+     * @return Collection|array|null
      */
     public function toResourceLinkage()
     {
@@ -53,7 +53,7 @@ class RelationshipSerializer extends JsonApiSerializer
      * Return a single, or collection of, JSON API resource objects for each
      * record in the relationship.
      *
-     * @return Collection|Model|null
+     * @return Collection|array|null
      */
     public function toResourceCollection()
     {
@@ -65,11 +65,11 @@ class RelationshipSerializer extends JsonApiSerializer
     /**
      * Return primary data for the JSON API document.
      *
-     * @return array
+     * @return mixed
      */
     protected function getPrimaryData()
     {
-        return $this->toResourceLinkage()->toArray();
+        return $this->toResourceLinkage();
     }
 
     /**
@@ -77,7 +77,7 @@ class RelationshipSerializer extends JsonApiSerializer
      *
      * @param \Closure $callback
      *
-     * @return Collection|Model|null
+     * @return mixed
      */
     protected function map($callback)
     {

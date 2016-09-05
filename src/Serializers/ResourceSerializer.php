@@ -2,6 +2,8 @@
 
 namespace Huntie\JsonApi\Serializers;
 
+use Illuminate\Support\Collection;
+
 class ResourceSerializer extends JsonApiSerializer
 {
     /**
@@ -106,16 +108,16 @@ class ResourceSerializer extends JsonApiSerializer
     public function getIncludedRecords()
     {
         return collect($this->include)->map(function ($relation) {
-            $serializer = new RelationshipSerializer($this->record, $relation, $this->fields);
+            $records = (new RelationshipSerializer($this->record, $relation, $this->fields))->toResourceCollection();
 
-            return collect($serializer->toResourceCollection());
+            return $records instanceof Collection ? $records : [$records];
         })->flatten(1);
     }
 
     /**
      * Return primary data for the JSON API document.
      *
-     * @return array
+     * @return mixed
      */
     protected function getPrimaryData()
     {

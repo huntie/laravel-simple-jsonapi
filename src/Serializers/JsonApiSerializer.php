@@ -32,7 +32,7 @@ abstract class JsonApiSerializer implements JsonSerializable
     /**
      * Return primary data for the JSON API document.
      *
-     * @return array
+     * @return mixed
      */
     abstract protected function getPrimaryData();
 
