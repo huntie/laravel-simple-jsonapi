@@ -15,7 +15,7 @@ class RelationshipSerializer extends JsonApiSerializer
     protected $relation;
 
     /**
-     * The subset of attributes to return for each record.
+     * The subset of attributes to return on each included record type.
      *
      * @var array
      */
@@ -26,7 +26,7 @@ class RelationshipSerializer extends JsonApiSerializer
      *
      * @param Model      $record   The primary record
      * @param string     $relation The named relation to serialize
-     * @param array|null $fields   Subset of fields to return
+     * @param array|null $fields   Subset of fields to return by record type
      */
     public function __construct($record, $relation, array $fields = [])
     {

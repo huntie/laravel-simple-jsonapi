@@ -14,7 +14,7 @@ class CollectionSerializer extends JsonApiSerializer
     protected $records;
 
     /**
-     * The subset of attributes to return for each record.
+     * The subset of attributes to return on each record type.
      *
      * @var array
      */
@@ -31,7 +31,7 @@ class CollectionSerializer extends JsonApiSerializer
      * Create a new JSON API collection serializer.
      *
      * @param \Illuminate\Support\Collection|LengthAwarePaginator $records The collection of records to serialize
-     * @param array|null                                          $fields  Subset of fields to return
+     * @param array|null                                          $fields  Subset of fields to return by record type
      * @param array|null                                          $include Relations to include
      */
     public function __construct($records, array $fields = [], array $include = [])

@@ -33,16 +33,6 @@ abstract class JsonApiController extends Controller
     abstract protected function getModel();
 
     /**
-     * Return the type name of the resource.
-     *
-     * @return string
-     */
-    protected function getModelType()
-    {
-        return str_slug($this->getModel()->getTable());
-    }
-
-    /**
      * The model relationships that can be updated.
      *
      * @return array
@@ -271,7 +261,7 @@ abstract class JsonApiController extends Controller
     protected function getRequestParameters($request)
     {
         return [
-            'fields' => $this->getRequestQuerySet($request, 'fields.' . $this->getModelType()),
+            'fields' => $this->getRequestQuerySet($request, 'fields'),
             'include' => $this->getRequestQuerySet($request, 'include'),
             'sort' => $this->getRequestQuerySet($request, 'sort'),
             'filter' => (array) $request->input('filter'),

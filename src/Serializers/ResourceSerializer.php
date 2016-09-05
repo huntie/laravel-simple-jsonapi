@@ -19,7 +19,7 @@ class ResourceSerializer extends JsonApiSerializer
     protected $relationships;
 
     /**
-     * The subset of record attributes to return.
+     * The subset of attributes to return on each record type.
      *
      * @var array
      */
@@ -36,7 +36,7 @@ class ResourceSerializer extends JsonApiSerializer
      * Create a new JSON API resource serializer.
      *
      * @param \Illuminate\Database\Eloquent\Model $record  The model instance to serialise
-     * @param array|null                          $fields  Subset of fields to return
+     * @param array|null                          $fields  Subset of fields to return by record type
      * @param array|null                          $include Relations to include
      */
     public function __construct($record, array $fields = [], array $include = [])
@@ -92,8 +92,6 @@ class ResourceSerializer extends JsonApiSerializer
      */
     public function toResourceObject()
     {
-        $this->record->load($this->relationships);
-
         return array_filter(array_merge($this->toBaseResourceObject(), [
             'relationships' => $this->transformRecordRelations()->toArray(),
         ]));
@@ -108,7 +106,9 @@ class ResourceSerializer extends JsonApiSerializer
     public function getIncludedRecords()
     {
         return collect($this->include)->map(function ($relation) {
-            return collect((new RelationshipSerializer($this->record, $relation))->toResourceCollection());
+            $serializer = new RelationshipSerializer($this->record, $relation, $this->fields);
+
+            return collect($serializer->toResourceCollection());
         })->flatten(1);
     }
 
@@ -153,9 +153,10 @@ class ResourceSerializer extends JsonApiSerializer
     {
         $attributes = array_diff_key($this->record->toArray(), $this->record->getRelations());
         $attributes = array_except($attributes, ['id']);
+        $fields = array_get($this->fields, $this->getRecordType());
 
-        if (!empty($this->fields)) {
-            $attributes = array_only($attributes, $this->fields);
+        if (!empty($fields)) {
+            $attributes = array_only($attributes, $fields);
         }
 
         return $attributes;
@@ -169,6 +170,8 @@ class ResourceSerializer extends JsonApiSerializer
      */
     protected function transformRecordRelations()
     {
+        $this->record->load($this->relationships);
+
         return collect($this->relationships)->combine(array_map(function ($relation) {
             return [
                 'data' => (new RelationshipSerializer($this->record, $relation))->toResourceLinkage(),
