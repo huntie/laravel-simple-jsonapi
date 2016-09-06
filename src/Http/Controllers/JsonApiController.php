@@ -316,13 +316,12 @@ abstract class JsonApiController extends Controller
      */
     protected function filterQuery($query, $attributes)
     {
-        $searchableColumns = Schema::getColumnListing($this->getModel()->getTable());
+        $searchableColumns = array_diff(
+            Schema::getColumnListing($this->getModel()->getTable()),
+            $this->getModel()->getHidden()
+        );
 
-        foreach ($attributes as $column => $value) {
-            if (!in_array($column, $searchableColumns)) {
-                continue;
-            }
-
+        foreach (array_intersect_key($attributes, array_flip($searchableColumns)) as $column => $value) {
             if (is_numeric($value)) {
                 // Exact numeric match
                 $query = $query->where($column, $value);
@@ -331,7 +330,7 @@ abstract class JsonApiController extends Controller
                 $query = $query->where($column, filter_var($value, FILTER_VALIDATE_BOOLEAN));
             } else {
                 // Partial string match
-                $query = $query->where($column, 'like', '%' . $value . '%');
+                $query = $query->where($column, 'LIKE', '%' . $value . '%');
             }
         }
 
