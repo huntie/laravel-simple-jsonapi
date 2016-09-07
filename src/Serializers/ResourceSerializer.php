@@ -111,7 +111,7 @@ class ResourceSerializer extends JsonApiSerializer
             $records = (new RelationshipSerializer($this->record, $relation, $this->fields))->toResourceCollection();
 
             return $records instanceof Collection ? $records : [$records];
-        })->flatten(1);
+        })->flatten(1)->unique()->values();
     }
 
     /**

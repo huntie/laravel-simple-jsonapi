@@ -72,7 +72,7 @@ class CollectionSerializer extends JsonApiSerializer
     {
         return $this->records->map(function ($record) {
             return (new ResourceSerializer($record, $this->fields, $this->include))->getIncludedRecords();
-        })->flatten(1);
+        })->flatten(1)->unique()->values();
     }
 
     /**
