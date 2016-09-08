@@ -229,6 +229,54 @@ Invalid requests to routes with this middleware will return a formatted error ob
 }
 ```
 
+## Model Serializers
+
+A number of Serializer classes are available to help you convert Eloquent models to valid JSON API documents in any context. Each Serializer provides a `serializeToObject()` and `serializeToJson()` method, and implements the [`JsonSerializable`](http://php.net/JsonSerializable) interface.
+
+### ResourceSerializer
+
+```php
+$serializer = new ResourceSerializer(User::first());
+return $serializer->serializeToJson();
+```
+
+In the constructor, you can optionally provide a second parameter specifying the array of fields to return, and a third parameter specifying which relationships to include.
+
+```php
+$serializer = new ResourceSerializer(Article::first(), ['articles.title', 'users.name'], ['author', 'comments']);
+```
+
+In `ResourceSerializer`, you can also choose to return JSON API resource identifier and object representations directly.
+
+```php
+$serializer->toResourceObject();
+$serializer->toResourceIdentifier();
+```
+
+### CollectionSerializer
+
+`CollectionSerializer` can be instantiated both with a collection of Models, or a `LengthAwarePaginator`. When a paginator instance is provided, pagination links and the total count are returned in the resulting document.
+
+```php
+$serializer = new CollectionSerializer(User::paginate(10));
+return $serializer->serializeToJson();
+```
+
+`CollectionSerializer` can also be scoped to particular fields and return any included records from a given set of relationships.
+
+```php
+$serializer = new CollectionSerializer(User::all(), ['users.email'], ['roles']);
+```
+
+### RelationshipSerializer
+
+`RelationshipSerializer` is instantiated with a primary model instance and the name of the relationship to transform. The returned document will contain a [resource linkage](http://jsonapi.org/format/#fetching-relationships) representing the relationship.
+
+```php
+$serializer = new RelationshipSerializer(User::first(), 'roles');
+return $serializer->serializeToJson();
+```
+
 ## Contributing
 
 If you discover a problem or have a feature request, please [create an issue](https://github.com/huntie/laravel-simple-jsonapi/issues) or feel free to fork this repository and make improvements.
