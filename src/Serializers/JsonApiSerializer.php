@@ -7,6 +7,13 @@ use JsonSerializable;
 abstract class JsonApiSerializer implements JsonSerializable
 {
     /**
+     * The JSON API version being implemented.
+     *
+     * @var string
+     */
+    const JSON_API_VERSION = '1.0';
+
+    /**
      * Meta information to include.
      *
      * @var \Illuminate\Support\Collection
@@ -70,6 +77,7 @@ abstract class JsonApiSerializer implements JsonSerializable
             'links' => $this->links->toArray(),
             'meta' => $this->meta->toArray(),
             'included' => $this->getIncludedData(),
+            'jsonapi' => $this->getDocumentMeta(),
         ]);
     }
 
@@ -101,5 +109,17 @@ abstract class JsonApiSerializer implements JsonSerializable
     protected function getIncludedData()
     {
         return [];
+    }
+
+    /**
+     * Return JSON API implementation information.
+     *
+     * @return array
+     */
+    private function getDocumentMeta()
+    {
+        return array_filter([
+            'version' => config('jsonapi.include_version') ? self::JSON_API_VERSION : null,
+        ]);
     }
 }
