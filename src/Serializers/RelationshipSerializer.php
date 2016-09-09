@@ -44,7 +44,7 @@ class RelationshipSerializer extends JsonApiSerializer
      */
     public function toResourceLinkage()
     {
-        return $this->map(function($record) {
+        return $this->map(function ($record) {
             return (new ResourceSerializer($record))->toResourceIdentifier();
         });
     }
@@ -57,7 +57,7 @@ class RelationshipSerializer extends JsonApiSerializer
      */
     public function toResourceCollection()
     {
-        return $this->map(function($record) {
+        return $this->map(function ($record) {
             return (new ResourceSerializer($record, $this->fields))->toBaseResourceObject();
         });
     }
