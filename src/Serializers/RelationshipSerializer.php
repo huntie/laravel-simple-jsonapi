@@ -75,16 +75,16 @@ class RelationshipSerializer extends JsonApiSerializer
     /**
      * Run a map over each item in the relationship.
      *
-     * @param \Closure $callback
+     * @param callable $callback
      *
      * @return mixed
      */
-    protected function map($callback)
+    protected function map(callable $callback)
     {
         if ($this->relation instanceof Collection) {
             return $this->relation->map($callback);
         } else if ($this->relation instanceof Model) {
-            return $callback($this->relation);
+            return call_user_func($callback, $this->relation);
         }
 
         return null;
