@@ -2,8 +2,12 @@
 
 namespace Huntie\JsonApi\Tests;
 
+use Huntie\JsonApi\Tests\Support\JsonApiAssertions;
+
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {
+    use JsonApiAssertions;
+
     /**
      * Get package providers.
      *
