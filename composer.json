@@ -20,8 +20,11 @@
         "illuminate/routing": ">=5.2.0",
         "illuminate/support": ">=5.2.0"
     },
-    "requre-dev": {
-        "phpunit/phpunit": "^5.0.0"
+    "require-dev": {
+        "phpunit/phpunit": "^5.0.0",
+        "orchestra/testbench": "^3.0.0",
+        "doctrine/dbal": "^2.5.0",
+        "fzaninotto/faker": "^1.6.0"
     },
     "autoload": {
         "psr-4": {
@@ -30,7 +33,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Huntie\\JsonApi\\Tests\\" : "tests/"
+            "Huntie\\JsonApi\\Tests\\": "tests/"
         }
     }
 }
