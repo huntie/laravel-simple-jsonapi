@@ -10,4 +10,14 @@ class User extends Model
      * @var array
      */
     protected $hidden = ['password'];
+
+    /**
+     * The posts the user has authored.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function post()
+    {
+        return $this->hasMany(Post::class, 'author_id');
+    }
 }
