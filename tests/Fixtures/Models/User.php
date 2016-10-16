@@ -16,8 +16,18 @@ class User extends Model
      *
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function post()
+    public function posts()
     {
         return $this->hasMany(Post::class, 'author_id');
+    }
+
+    /**
+     * The post comments the user has created.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class, 'creator_id');
     }
 }

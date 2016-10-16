@@ -15,6 +15,16 @@ class Post extends Model
     }
 
     /**
+     * The comments made in reply to the post.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\HasMany
+     */
+    public function comments()
+    {
+        return $this->hasMany(Comment::class);
+    }
+
+    /**
      * The post tag memberships.
      *
      * @return \Illuminate\Database\Eloquent\Relations\BelongsToMany
