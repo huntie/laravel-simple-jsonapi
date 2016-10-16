@@ -76,8 +76,7 @@ class ResourceSerializerTest extends TestCase
         $included = $serializer->getIncludedRecords();
 
         $this->assertInstanceOf(Collection::class, $included);
-        $this->assertCount(4, $included);
-        $this->seeJsonApiCollection(['data' => $included->toArray()]);
+        $this->seeJsonApiObjectCollection(['data' => $included->toArray()], 4);
 
         foreach ($included as $record) {
             $this->assertRegExp('/posts|comments/', $record['type'], 'Unexpected record type included with resource');
@@ -97,8 +96,7 @@ class ResourceSerializerTest extends TestCase
         $included = $serializer->getIncludedRecords();
 
         $this->assertInstanceOf(Collection::class, $included);
-        $this->assertCount(2, $included);
-        $this->seeJsonApiCollection(['data' => $included->toArray()]);
+        $this->seeJsonApiObjectCollection(['data' => $included->toArray()], 2);
 
         foreach ($included as $record) {
             $this->assertEquals('posts', $record['type'], 'scopeIncludes() failed to return relationship subset');
