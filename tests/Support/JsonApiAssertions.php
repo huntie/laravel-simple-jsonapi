@@ -12,9 +12,11 @@ trait JsonApiAssertions
     /**
      * Assert that a document containing a valid JSON API object is returned.
      *
+     * @param array|null $responseData
+     *
      * @return $this
      */
-    public function seeJsonApiObject()
+    public function seeJsonApiObject($responseData = null)
     {
         return $this->seeJsonStructure([
             'data' => [
@@ -22,15 +24,17 @@ trait JsonApiAssertions
                 'id',
                 'attributes',
             ]
-        ]);
+        ], $responseData);
     }
 
     /**
      * Assert that a document containing a valid JSON API collection is returned.
      *
+     * @param array|null $responseData
+     *
      * @return $this
      */
-    public function seeJsonApiCollection()
+    public function seeJsonApiCollection($responseData = null)
     {
         return $this->seeJsonStructure([
             'data' => [
@@ -40,6 +44,6 @@ trait JsonApiAssertions
                     'attributes',
                 ]
             ]
-        ]);
+        ], $responseData);
     }
 }

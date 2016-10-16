@@ -17,7 +17,7 @@ class JsonApiSerializerTest extends TestCase
         $document = $serializer->serializeToObject();
 
         $this->assertInternalType('array', $document);
-        $this->assertArrayHasKey('data', $document);
+        $this->seeJsonApiObject($document);
     }
 
     /**

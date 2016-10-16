@@ -5,6 +5,7 @@ namespace Huntie\JsonApi\Tests\Serializers;
 use Huntie\JsonApi\Serializers\ResourceSerializer;
 use Huntie\JsonApi\Tests\TestCase;
 use Huntie\JsonApi\Tests\Fixtures\Models\User;
+use Illuminate\Support\Collection;
 
 class ResourceSerializerTest extends TestCase
 {
@@ -61,5 +62,46 @@ class ResourceSerializerTest extends TestCase
 
         $this->assertArrayHasKey('name', $resource['attributes']);
         $this->assertArrayNotHasKey('email', $resource['attributes']);
+    }
+
+    /**
+     * Test loading of included records.
+     */
+    public function testIncludedRecords()
+    {
+        $user = factory(User::class)
+            ->states('withPosts', 'withComments')
+            ->make();
+        $serializer = new ResourceSerializer($user, [], ['posts', 'comments']);
+        $included = $serializer->getIncludedRecords();
+
+        $this->assertInstanceOf(Collection::class, $included);
+        $this->assertCount(4, $included);
+        $this->seeJsonApiCollection(['data' => $included->toArray()]);
+
+        foreach ($included as $record) {
+            $this->assertRegExp('/posts|comments/', $record['type'], 'Unexpected record type included with resource');
+        }
+    }
+
+    /**
+     * Test scoping of included records.
+     */
+    public function testScopeIncludedRecords()
+    {
+        $user = factory(User::class)
+            ->states('withPosts', 'withComments')
+            ->make();
+        $serializer = new ResourceSerializer($user, [], ['posts', 'comments']);
+        $serializer->scopeIncludes(['posts']);
+        $included = $serializer->getIncludedRecords();
+
+        $this->assertInstanceOf(Collection::class, $included);
+        $this->assertCount(2, $included);
+        $this->seeJsonApiCollection(['data' => $included->toArray()]);
+
+        foreach ($included as $record) {
+            $this->assertEquals('posts', $record['type'], 'scopeIncludes() failed to return relationship subset');
+        }
     }
 }
