@@ -4,6 +4,7 @@ namespace Huntie\JsonApi\Tests\Serializers;
 
 use Huntie\JsonApi\Serializers\ResourceSerializer;
 use Huntie\JsonApi\Tests\TestCase;
+use Huntie\JsonApi\Tests\Fixtures\Models\Post;
 use Huntie\JsonApi\Tests\Fixtures\Models\User;
 use Illuminate\Support\Collection;
 
@@ -62,6 +63,26 @@ class ResourceSerializerTest extends TestCase
 
         $this->assertArrayHasKey('name', $resource['attributes']);
         $this->assertArrayNotHasKey('email', $resource['attributes']);
+    }
+
+    /**
+     * Test the set of grouped relationship identifiers returned with a full
+     * resource object.
+     */
+    public function testResourceRelationships()
+    {
+        $post = factory(Post::class)
+            ->states('withAuthor', 'withComments')
+            ->make();
+        $serializer = new ResourceSerializer($post, [],  ['author', 'comments']);
+        $resource = $serializer->toResourceObject();
+
+        $this->assertArrayHasKey('relationships', $resource);
+        $this->assertArrayHasKey('author', $resource['relationships']);
+        $this->seeJsonApiResourceIdentifier($resource['relationships']['author']);
+        $this->assertEquals('users', $resource['relationships']['author']['data']['type']);
+        $this->assertArrayHasKey('comments', $resource['relationships']);
+        $this->assertCount(2, $resource['relationships']['comments']['data']);
     }
 
     /**
