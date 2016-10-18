@@ -1,0 +1,13 @@
+filter:
+    paths:
+        - 'src/*'
+build:
+    environment:
+        php:
+            version: 7.0.10
+    dependencies:
+        override:
+            - composer install
+    cache:
+        directories:
+            - 'vendor/'
