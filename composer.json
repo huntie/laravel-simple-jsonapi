@@ -2,6 +2,16 @@
     "name": "huntie/laravel-simple-jsonapi",
     "description": "JSON API support for Laravel",
     "homepage": "https://github.com/huntie/laravel-simple-jsonapi",
+    "keywords": [
+        "laravel",
+        "json",
+        "api",
+        "jsonapi",
+        "json-api",
+        "rest",
+        "transformer",
+        "serializer"
+    ],
     "license": "MIT",
     "type": "library",
     "authors": [
