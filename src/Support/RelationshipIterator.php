@@ -3,6 +3,7 @@
 namespace Huntie\JsonApi\Support;
 
 use InvalidArgumentException;
+use Huntie\JsonApi\Contracts\JsonApiResource;
 use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Illuminate\Database\Eloquent\Model;
 
@@ -32,6 +33,10 @@ class RelationshipIterator
     {
         if (!preg_match('/^([A-Za-z]+.?)+[A-Za-z]+$/', $path)) {
             throw new InvalidArgumentException('The relationship path must be a valid string');
+        }
+
+        if (!$record instanceof JsonApiResource || !in_array($path, $record->getIncludableRelations())) {
+            throw new InvalidRelationPathException($path);
         }
 
         $this->record = $record;

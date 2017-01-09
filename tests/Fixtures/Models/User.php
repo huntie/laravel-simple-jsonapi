@@ -2,7 +2,9 @@
 
 namespace Huntie\JsonApi\Tests\Fixtures\Models;
 
-class User extends Model
+use Huntie\JsonApi\Contracts\JsonApiResource;
+
+class User extends Model implements JsonApiResource
 {
     /**
      * The attributes excluded from the model's JSON form.
@@ -10,6 +12,19 @@ class User extends Model
      * @var array
      */
     protected $hidden = ['password'];
+
+    /**
+     * The relationships which can be included with this resource.
+     *
+     * @return array
+     */
+    public function getIncludableRelations()
+    {
+        return [
+            'posts',
+            'comments',
+        ];
+    }
 
     /**
      * The posts the user has authored.
