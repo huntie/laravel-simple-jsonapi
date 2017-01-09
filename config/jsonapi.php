@@ -16,4 +16,19 @@ return [
 
     'include_version' => false,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Enable inclusion of related resources
+    |--------------------------------------------------------------------------
+    |
+    | Set whether index and show endpoints for resources should support
+    | including related records when the 'included' parameter is sent in a
+    | request.
+    |
+    | http://jsonapi.org/format/#fetching-includes
+    |
+    */
+
+    'enable_included_resources' => true,
+
 ];

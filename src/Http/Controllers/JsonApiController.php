@@ -4,6 +4,7 @@ namespace Huntie\JsonApi\Http\Controllers;
 
 use Schema;
 use Validator;
+use Huntie\JsonApi\Exceptions\HttpException;
 use Huntie\JsonApi\Http\JsonApiResponse;
 use Huntie\JsonApi\Serializers\CollectionSerializer;
 use Huntie\JsonApi\Serializers\RelationshipSerializer;
@@ -262,6 +263,12 @@ abstract class JsonApiController extends Controller
      */
     protected function getRequestParameters($request)
     {
+        $enableIncluded = config('jsonapi.enable_included_resources');
+
+        if ($request->has('include') && is_bool($enableIncluded) && !$enableIncluded) {
+            throw new HttpException('Inclusion of related resources is not supported');
+        }
+
         return [
             'fields' => $this->getRequestQuerySet($request, 'fields', '/^([A-Za-z]+.?)+[A-Za-z]+$/'),
             'include' => $this->getRequestQuerySet($request, 'include', '/^([A-Za-z]+.?)+[A-Za-z]+$/'),
