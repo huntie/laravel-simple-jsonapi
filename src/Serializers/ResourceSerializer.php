@@ -103,6 +103,8 @@ class ResourceSerializer extends JsonApiSerializer
      * Return a collection of JSON API resource objects for each included
      * relationship.
      *
+     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     *
      * @return \Illuminate\Support\Collection
      */
     public function getIncludedRecords()
@@ -168,12 +170,12 @@ class ResourceSerializer extends JsonApiSerializer
      * Return a collection of JSON API resource identifier objects by each
      * relation on the primary record.
      *
+     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     *
      * @return \Illuminate\Support\Collection
      */
     protected function transformRecordRelations()
     {
-        $this->record->load($this->relationships);
-
         return collect($this->relationships)->combine(array_map(function ($relation) {
             return [
                 'data' => (new RelationshipSerializer($this->record, $relation))->toResourceLinkage(),
