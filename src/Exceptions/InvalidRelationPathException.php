@@ -2,21 +2,20 @@
 
 namespace Huntie\JsonApi\Exceptions;
 
-use Exception;
+use Illuminate\Http\Response;
 
-class InvalidRelationPathException extends Exception
+class InvalidRelationPathException extends HttpException
 {
     /**
      * Create a new InvalidRelationPathException instance.
      *
-     * @param string         $path     The relation path attempted
-     * @param int|null       $code     User defined exception code
-     * @param Exception|null $previous Previous exception if nested
+     * @param string $path The relation path attempted
      */
-    public function __construct($path, $code = 0, Exception $previous = null)
+    public function __construct($path, $response = null)
     {
-        $message = sprintf('The relationship path "%s" could not be resolved', $path);
-
-        parent::__construct($message, $code, $previous);
+        parent::__construct(
+            sprintf('The relationship path "%s" could not be resolved', $path),
+            Response::HTTP_BAD_REQUEST
+        );
     }
 }
