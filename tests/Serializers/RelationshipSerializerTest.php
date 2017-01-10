@@ -96,4 +96,19 @@ class RelationshipSerializerTest extends TestCase
             $this->assertArrayNotHasKey('content', $record['attributes']);
         }
     }
+
+    /**
+     * Test resolving an invalid relation path.
+     *
+     * @expectedException \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     */
+    public function testInvalidRelationPath()
+    {
+        $user = factory(User::class)
+            ->states('withPosts')
+            ->make();
+
+        $serializer = new RelationshipSerializer($user, 'nonexistent.relation');
+        $serializer->toResourceLinkage();
+    }
 }
