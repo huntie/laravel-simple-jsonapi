@@ -3,7 +3,6 @@
 namespace Huntie\JsonApi\Support;
 
 use InvalidArgumentException;
-use Huntie\JsonApi\Contracts\JsonApiResource;
 use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Illuminate\Database\Eloquent\Model;
 
@@ -35,10 +34,6 @@ class RelationshipIterator
             throw new InvalidArgumentException('The relationship path must be a valid string');
         }
 
-        if (!$record instanceof JsonApiResource || !in_array($path, $record->getIncludableRelations())) {
-            throw new InvalidRelationPathException($path);
-        }
-
         $this->record = $record;
         $this->path = $path;
     }
@@ -48,7 +43,7 @@ class RelationshipIterator
      *
      * @throws InvalidRelationPathException
      *
-     * @return Collection|Model|null
+     * @return \Illuminate\Support\Collection|Model|null
      */
     public function resolve()
     {

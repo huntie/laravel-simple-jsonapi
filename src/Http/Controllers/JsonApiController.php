@@ -4,7 +4,9 @@ namespace Huntie\JsonApi\Http\Controllers;
 
 use Schema;
 use Validator;
+use Huntie\JsonApi\Contracts\Model\IncludesRelatedResources;
 use Huntie\JsonApi\Exceptions\HttpException;
+use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Huntie\JsonApi\Http\JsonApiResponse;
 use Huntie\JsonApi\Serializers\CollectionSerializer;
 use Huntie\JsonApi\Serializers\RelationshipSerializer;
@@ -57,6 +59,7 @@ abstract class JsonApiController extends Controller
     {
         $records = $query ?: $this->getModel()->newQuery();
         $params = $this->getRequestParameters($request);
+        $this->validateIncludableRelations($params['include']);
 
         $records = $this->sortQuery($records, $params['sort']);
         $records = $this->filterQuery($records, $params['filter']);
@@ -103,6 +106,7 @@ abstract class JsonApiController extends Controller
     {
         $record = $this->findModelInstance($record);
         $params = $this->getRequestParameters($request);
+        $this->validateIncludableRelations($params['include']);
 
         return new JsonApiResponse(new ResourceSerializer($record, $params['fields'], $params['include']));
     }
@@ -304,6 +308,29 @@ abstract class JsonApiController extends Controller
         }
 
         return $values;
+    }
+
+    /**
+     * Validate the requested included relationships against those that are
+     * allowed on the requested resource type.
+     *
+     * @param array|null $relations
+     *
+     * @throws InvalidRelationPathException
+     */
+    protected function validateIncludableRelations($relations)
+    {
+        if (is_null($relations)) {
+            return;
+        }
+
+        $model = $this->getModel();
+
+        foreach ($relations as $relation) {
+            if (!$model instanceof IncludesRelatedResources || !in_array($relation, $model->getIncludableRelations())) {
+                throw new InvalidRelationPathException($relation);
+            }
+        }
     }
 
     /**
