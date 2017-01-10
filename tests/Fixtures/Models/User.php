@@ -2,9 +2,9 @@
 
 namespace Huntie\JsonApi\Tests\Fixtures\Models;
 
-use Huntie\JsonApi\Contracts\JsonApiResource;
+use Huntie\JsonApi\Contracts\Model\IncludesRelatedResources;
 
-class User extends Model implements JsonApiResource
+class User extends Model implements IncludesRelatedResources
 {
     /**
      * The attributes excluded from the model's JSON form.

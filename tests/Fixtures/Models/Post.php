@@ -2,9 +2,9 @@
 
 namespace Huntie\JsonApi\Tests\Fixtures\Models;
 
-use Huntie\JsonApi\Contracts\JsonApiResource;
+use Huntie\JsonApi\Contracts\Model\IncludesRelatedResources;
 
-class Post extends Model implements JsonApiResource
+class Post extends Model implements IncludesRelatedResources
 {
     /**
      * The relationships which can be included with this resource.

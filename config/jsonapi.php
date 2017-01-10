@@ -24,8 +24,7 @@ return [
     | Set whether index and show endpoints for resources should support
     | including related records when the 'included' parameter is sent in a
     | request. A whitelist of enabled relations can be set per-model by
-    | returning an array from getIncludableRelations when implementing
-    | JsonApiResource.
+    | implementing \Huntie\JsonApi\Contracts\Model\IncludesRelatedResources.
     |
     | http://jsonapi.org/format/#fetching-includes
     |

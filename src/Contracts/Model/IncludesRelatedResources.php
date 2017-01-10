@@ -1,8 +1,8 @@
 <?php
 
-namespace Huntie\JsonApi\Contracts;
+namespace Huntie\JsonApi\Contracts\Model;
 
-interface JsonApiResource
+interface IncludesRelatedResources
 {
     /**
      * The relationships which can be included with this resource.
