@@ -46,7 +46,7 @@ class ResourceSerializer extends JsonApiSerializer
         parent::__construct();
 
         $this->record = $record;
-        $this->relationships = array_merge($record->getRelations(), $include);
+        $this->relationships = array_merge(array_keys($record->getRelations()), $include);
         $this->fields = array_unique($fields);
         $this->include = array_unique($include);
     }
