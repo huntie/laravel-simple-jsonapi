@@ -25,13 +25,11 @@ An implementation of the [JSON API](http://jsonapi.org/) specification for Larav
 
         $ php artisan vendor:publish
 
-## JsonApiController
+## Usage
 
 The main class in this package is `JsonApiController`, which provides a full set of create, read, update and delete actions for a given Eloquent Model. A bunch of query parameters are supported which will affect the JSON API Objects returned, and you can also fetch and update model relationships.
 
-### Basic usage
-
-#### 1. Define routes
+### 1. Define routes
 
 Add a [RESTful resource route](https://laravel.com/docs/5.2/controllers#restful-resource-controllers) for the target model in `routes.php`.
 
@@ -47,7 +45,7 @@ Route::resource('users', 'UserController', [
 ]);
 ```
 
-#### 2. Add controller
+### 2. Add controller
 
 Our new controller for this resource needs to extend `JsonApiController` and use the `JsonApiControllerActions` trait. The base information to provide is the type of `Model` this controller is for, by implementing the abstract method `getModel`.
 
@@ -90,7 +88,35 @@ This package uses these Eloquent features heavily – the examples demonstrate f
 
 Coming soon.
 
-## Errors
+## Resource options
+
+### Inclusion of related resources
+
+To allow [including related resources](http://jsonapi.org/format/#fetching-includes) on a given resource, the model for the primary resource should implement the `IncludesRelatedResources` interface, providing a whitelist of relationship paths that can be included.
+
+```php
+namespace App\Http\Requests\User;
+
+use Huntie\JsonApi\Contracts\Model\IncludesRelatedResources;
+
+class Post extends Model implements IncludesRelatedResources
+{
+    /**
+     * The relationships which can be included with this resource.
+     *
+     * @return array
+     */
+    public function getIncludableRelations()
+    {
+        return [
+            'author',
+            'author.profile',
+        ];
+    }
+}
+```
+
+## Error handling
 
 There are a number of contexts where you may return error responses as formatted JSON API Error Objects.
 

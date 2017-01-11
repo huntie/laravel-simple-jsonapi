@@ -3,6 +3,10 @@
 namespace Huntie\JsonApi\Http\Controllers;
 
 use Schema;
+use Validator;
+use Huntie\JsonApi\Contracts\Model\IncludesRelatedResources;
+use Huntie\JsonApi\Exceptions\HttpException;
+use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Huntie\JsonApi\Http\JsonApiResponse;
 use Huntie\JsonApi\Serializers\CollectionSerializer;
 use Huntie\JsonApi\Serializers\RelationshipSerializer;
@@ -18,6 +22,7 @@ use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
+use Illuminate\Validation\ValidationException;
 
 abstract class JsonApiController extends Controller
 {
@@ -54,6 +59,7 @@ abstract class JsonApiController extends Controller
     {
         $records = $query ?: $this->getModel()->newQuery();
         $params = $this->getRequestParameters($request);
+        $this->validateIncludableRelations($params['include']);
 
         $records = $this->sortQuery($records, $params['sort']);
         $records = $this->filterQuery($records, $params['filter']);
@@ -100,6 +106,7 @@ abstract class JsonApiController extends Controller
     {
         $record = $this->findModelInstance($record);
         $params = $this->getRequestParameters($request);
+        $this->validateIncludableRelations($params['include']);
 
         return new JsonApiResponse(new ResourceSerializer($record, $params['fields'], $params['include']));
     }
@@ -260,10 +267,16 @@ abstract class JsonApiController extends Controller
      */
     protected function getRequestParameters($request)
     {
+        $enableIncluded = config('jsonapi.enable_included_resources');
+
+        if ($request->has('include') && is_bool($enableIncluded) && !$enableIncluded) {
+            throw new HttpException('Inclusion of related resources is not supported');
+        }
+
         return [
-            'fields' => $this->getRequestQuerySet($request, 'fields'),
-            'include' => $this->getRequestQuerySet($request, 'include'),
-            'sort' => $this->getRequestQuerySet($request, 'sort'),
+            'fields' => $this->getRequestQuerySet($request, 'fields', '/^([A-Za-z]+.?)+[A-Za-z]+$/'),
+            'include' => $this->getRequestQuerySet($request, 'include', '/^([A-Za-z]+.?)+[A-Za-z]+$/'),
+            'sort' => $this->getRequestQuerySet($request, 'sort', '/[A-Za-z_]+/'),
             'filter' => (array) $request->input('filter'),
         ];
     }
@@ -271,14 +284,53 @@ abstract class JsonApiController extends Controller
     /**
      * Return any comma separated values in a request query field as an array.
      *
-     * @param Request $request
-     * @param string  $key
+     * @param Request     $request
+     * @param string      $key
+     * @param string|null $validate Regular expression to test for each item
+     *
+     * @throws \Illuminate\Validation\ValidationException
      *
      * @return array
      */
-    protected function getRequestQuerySet($request, $key)
+    protected function getRequestQuerySet($request, $key, $validate = null)
     {
-        return preg_split('/,/', $request->input($key), null, PREG_SPLIT_NO_EMPTY);
+        $values = preg_split('/,/', $request->input($key), null, PREG_SPLIT_NO_EMPTY);
+
+        $validator = Validator::make(['param' => $values], [
+            'param.*' => 'required' . ($validate ? '|regex:' . $validate : ''),
+        ]);
+
+        if ($validator->fails()) {
+            throw new ValidationException($validator, $this->error(
+                Response::HTTP_BAD_REQUEST,
+                sprintf('Invalid values for "%s" parameter', $key))
+            );
+        }
+
+        return $values;
+    }
+
+    /**
+     * Validate the requested included relationships against those that are
+     * allowed on the requested resource type.
+     *
+     * @param array|null $relations
+     *
+     * @throws InvalidRelationPathException
+     */
+    protected function validateIncludableRelations($relations)
+    {
+        if (is_null($relations)) {
+            return;
+        }
+
+        $model = $this->getModel();
+
+        foreach ($relations as $relation) {
+            if (!$model instanceof IncludesRelatedResources || !in_array($relation, $model->getIncludableRelations())) {
+                throw new InvalidRelationPathException($relation);
+            }
+        }
     }
 
     /**
