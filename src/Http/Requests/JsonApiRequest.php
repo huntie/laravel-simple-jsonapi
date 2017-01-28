@@ -10,9 +10,47 @@ use Illuminate\Http\Response;
 abstract class JsonApiRequest extends FormRequest
 {
     /**
+     * Base validation rules for all JSON API requests.
+     *
+     * @var array
+     */
+    private $baseRules = [
+        'fields' => 'regex:^(?:[A-Za-z]+[A-Za-z_.\-,]*)*[A-Za-z]+$',
+        'include' => 'regex:^(?:[A-Za-z]+[A-Za-z_.\-,]*)*[A-Za-z]+$',
+        'sort' => 'regex:^-?(?:[A-Za-z]+[A-Za-z_.\-,]*)*[A-Za-z]+$',
+        'filter' => 'array',
+        'filter.*' => 'alpha_dash',
+        'page' => 'array',
+        'page.size' => 'integer',
+        'page.number' => 'integer',
+    ];
+
+    /**
+     * Base validation rules for the individual request type.
+     *
+     * @var array
+     */
+    protected $rules = [];
+
+    /**
+     * Get the validator instance for the request.
+     *
+     * @return Validator
+     */
+    protected function getValidatorInstance()
+    {
+        $validator = parent::getValidatorInstance();
+        $validator->setRules(array_merge($this->baseRules, $this->rules, $validator->getRules()));
+
+        return $validator;
+    }
+
+    /**
      * Format the errors from the given Validator instance.
      *
-     * {@inheritdoc}
+     * @param Validator $validator
+     *
+     * @return array
      */
     protected function formatErrors(Validator $validator)
     {
