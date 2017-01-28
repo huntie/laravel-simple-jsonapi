@@ -2,6 +2,7 @@
 
 namespace Huntie\JsonApi\Http\Requests;
 
+use Huntie\JsonApi\Exceptions\HttpException;
 use Huntie\JsonApi\Http\JsonApiResponse;
 use Illuminate\Contracts\Validation\Validator;
 use Illuminate\Foundation\Http\FormRequest;
@@ -39,10 +40,22 @@ abstract class JsonApiRequest extends FormRequest
      */
     protected function getValidatorInstance()
     {
+        $this->beforeValidation();
+
         $validator = parent::getValidatorInstance();
         $validator->setRules(array_merge($this->baseRules, $this->rules, $validator->getRules()));
 
         return $validator;
+    }
+
+    /**
+     * Perform additional logic before the request input is validated.
+     */
+    protected function beforeValidation()
+    {
+        if ($this->exists('include') && config('jsonapi.enable_included_resources') === false) {
+            throw new HttpException('Inclusion of related resources is not supported');
+        }
     }
 
     /**
