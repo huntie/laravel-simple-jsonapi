@@ -2,7 +2,12 @@
 
 namespace Huntie\JsonApi\Http\Controllers;
 
-use Illuminate\Http\Request;
+use Huntie\JsonApi\Http\Requests\ListResourceRequest;
+use Huntie\JsonApi\Http\Requests\StoreResourceRequest;
+use Huntie\JsonApi\Http\Requests\ShowResourceRequest;
+use Huntie\JsonApi\Http\Requests\UpdateResourceRequest;
+use Huntie\JsonApi\Http\Requests\DestroyResourceRequest;
+use Huntie\JsonApi\Http\Requests\ShowRelationshipRequest;
 
 /**
  * Add default resource controller methods for JsonApiController actions.
@@ -19,11 +24,11 @@ trait JsonApiControllerActions
     /**
      * Return a listing of the resource.
      *
-     * @param Request $request
+     * @param ListResourceRequest $request
      *
      * @return \Huntie\JsonApi\Http\JsonApiResponse
      */
-    public function index(Request $request)
+    public function index(ListResourceRequest $request)
     {
         return $this->indexAction($request);
     }
@@ -31,11 +36,11 @@ trait JsonApiControllerActions
     /**
      * Store a new record.
      *
-     * @param Request $request
+     * @param StoreResourceRequest $request
      *
      * @return \Huntie\JsonApi\Http\JsonApiResponse
      */
-    public function store(Request $request)
+    public function store(StoreResourceRequest $request)
     {
         return $this->storeAction($request);
     }
@@ -43,12 +48,12 @@ trait JsonApiControllerActions
     /**
      * Return a specified record.
      *
-     * @param Request $request
-     * @param int     $id
+     * @param ShowResourceRequest $request
+     * @param int                 $id
      *
      * @return \Huntie\JsonApi\Http\JsonApiResponse
      */
-    public function show(Request $request, $id)
+    public function show(ShowResourceRequest $request, $id)
     {
         return $this->showAction($request, $id);
     }
@@ -56,12 +61,12 @@ trait JsonApiControllerActions
     /**
      * Update a specified record.
      *
-     * @param Request $request
-     * @param int     $id
+     * @param UpdateResourceRequest $request
+     * @param int                   $id
      *
      * @return \Huntie\JsonApi\Http\JsonApiResponse
      */
-    public function update(Request $request, $id)
+    public function update(UpdateResourceRequest $request, $id)
     {
         return $this->updateAction($request, $id);
     }
@@ -69,12 +74,12 @@ trait JsonApiControllerActions
     /**
      * Destroy a specified record.
      *
-     * @param Request $request
-     * @param int     $id
+     * @param DestroyResourceRequest $request
+     * @param int                    $id
      *
      * @return \Huntie\JsonApi\Http\JsonApiResponse
      */
-    public function destroy(Request $request, $id)
+    public function destroy(DestroyResourceRequest $request, $id)
     {
         return $this->destroyAction($request, $id);
     }
@@ -82,13 +87,13 @@ trait JsonApiControllerActions
     /**
      * Return a specified record relationship.
      *
-     * @param Request $request
-     * @param int     $id
-     * @param string  $relation
+     * @param ShowRelationshipRequest $request
+     * @param int                     $id
+     * @param string                  $relation
      *
      * @return \Huntie\JsonApi\Http\JsonApiResponse
      */
-    public function showRelationship(Request $request, $id, $relation)
+    public function showRelationship(ShowRelationshipRequest $request, $id, $relation)
     {
         return $this->showRelationshipAction($request, $id, $relation);
     }
