@@ -2,7 +2,7 @@
 
 namespace Huntie\JsonApi\Serializers;
 
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CollectionSerializer extends JsonApiSerializer
 {
