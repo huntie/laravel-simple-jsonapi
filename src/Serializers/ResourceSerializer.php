@@ -70,7 +70,7 @@ class ResourceSerializer extends JsonApiSerializer
     {
         return [
             'type' => $this->getRecordType(),
-            'id' => $this->record->id,
+            'id' => $this->record->getKey(),
         ];
     }
 
