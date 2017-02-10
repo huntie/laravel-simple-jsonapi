@@ -69,8 +69,8 @@ class ResourceSerializer extends JsonApiSerializer
     public function toResourceIdentifier()
     {
         return [
-            'type' => $this->getRecordType(),
-            'id' => $this->record->getKey(),
+            'type' => $this->getResourceType(),
+            'id' => $this->getPrimaryKey(),
         ];
     }
 
@@ -137,15 +137,27 @@ class ResourceSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return the primary record type name.
+     * Return the primary resource type name.
      *
      * @return string
      */
-    protected function getRecordType()
+    protected function getResourceType()
     {
         $modelName = collect(explode('\\', get_class($this->record)))->last();
 
         return snake_case(str_plural($modelName), '-');
+    }
+
+    /**
+     * Return the primary key value for the resource.
+     *
+     * @return int|string
+     */
+    protected function getPrimaryKey()
+    {
+        $value = $this->record->getKey();
+
+        return is_int($value) ? $value : (string) $value;
     }
 
     /**
@@ -157,7 +169,7 @@ class ResourceSerializer extends JsonApiSerializer
     {
         $attributes = array_diff_key($this->record->toArray(), $this->record->getRelations());
         $attributes = array_except($attributes, ['id']);
-        $fields = array_get($this->fields, $this->getRecordType());
+        $fields = array_get($this->fields, $this->getResourceType());
 
         if (!empty($fields)) {
             $attributes = array_only($attributes, $fields);
