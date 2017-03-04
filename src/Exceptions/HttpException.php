@@ -3,8 +3,15 @@
 namespace Huntie\JsonApi\Exceptions;
 
 use Huntie\JsonApi\Support\JsonApiErrors;
+use Illuminate\Foundation\Application;
 use Illuminate\Http\Response;
-use Illuminate\Http\Exception\HttpResponseException;
+
+class_alias(
+    version_compare(Application::VERSION, '5.4.0', '>=') ?
+        'Illuminate\Http\Exceptions\HttpResponseException' :
+        'Illuminate\Http\Exception\HttpResponseException',
+    __NAMESPACE__ . '\HttpResponseException'
+);
 
 class HttpException extends HttpResponseException
 {
