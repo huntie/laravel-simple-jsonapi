@@ -1,12 +1,12 @@
 <?php
 
-namespace Huntie\JsonApi\Tests\Serializers;
+namespace Tests\Serializers;
 
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Huntie\JsonApi\Serializers\CollectionSerializer;
-use Huntie\JsonApi\Tests\TestCase;
-use Huntie\JsonApi\Tests\Fixtures\Models\User;
+use Tests\TestCase;
+use Tests\Fixtures\Models\User;
 
 class CollectionSerializerTest extends TestCase
 {

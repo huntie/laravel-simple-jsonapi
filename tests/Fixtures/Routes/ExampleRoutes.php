@@ -1,8 +1,8 @@
 <?php
 
-namespace Huntie\JsonApi\Tests\Fixtures\Routes;
+namespace Tests\Fixtures\Routes;
 
-use Huntie\JsonApi\Tests\Fixtures\Controllers\UserController;
+use Tests\Fixtures\Controllers\UserController;
 
 /**
  * Define example application routes for testing.

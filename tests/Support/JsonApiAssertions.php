@@ -1,6 +1,6 @@
 <?php
 
-namespace Huntie\JsonApi\Tests\Support;
+namespace Tests\Support;
 
 /**
  * Extend TestCase with additional JSON API related assertions.

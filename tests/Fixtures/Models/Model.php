@@ -1,6 +1,6 @@
 <?php
 
-namespace Huntie\JsonApi\Tests\Fixtures\Models;
+namespace Tests\Fixtures\Models;
 
 use Illuminate\Database\Eloquent\Model as Eloquent;
 
