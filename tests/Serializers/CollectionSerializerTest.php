@@ -17,7 +17,7 @@ class CollectionSerializerTest extends TestCase
     {
         $serializer = new CollectionSerializer(factory(User::class, 5)->make());
 
-        $this->seeJsonApiObjectCollection($serializer->serializeToObject(), 5);
+        $this->assertJsonApiObjectCollection($serializer->serializeToObject(), 5);
     }
 
     /**
@@ -59,7 +59,7 @@ class CollectionSerializerTest extends TestCase
         $included = $serializer->getIncludedRecords();
 
         $this->assertInstanceOf(Collection::class, $included);
-        $this->seeJsonApiObjectCollection(['data' => $included->toArray()], 6);
+        $this->assertJsonApiObjectCollection(['data' => $included->toArray()], 6);
 
         foreach ($included as $record) {
             $this->assertEquals('posts', $record['type'], 'Unexpected record type included with collection');

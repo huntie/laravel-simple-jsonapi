@@ -20,7 +20,7 @@ class RelationshipSerializerTest extends TestCase
         $serializer = new RelationshipSerializer($post, 'author');
         $relationship = $serializer->toResourceLinkage();
 
-        $this->seeJsonApiResourceIdentifier(['data' => $relationship]);
+        $this->assertJsonApiResourceIdentifier(['data' => $relationship]);
         $this->assertEquals([
             'type' => 'users',
             'id' => $post->author->id,
@@ -38,7 +38,7 @@ class RelationshipSerializerTest extends TestCase
         $serializer = new RelationshipSerializer($user, 'posts');
         $relationship = $serializer->toResourceLinkage();
 
-        $this->seeJsonApiIdentifierCollection(['data' => $relationship->toArray()], 2);
+        $this->assertJsonApiIdentifierCollection(['data' => $relationship->toArray()], 2);
 
         foreach ($relationship as $identifier) {
             $this->assertEquals('posts', $identifier['type']);
@@ -56,7 +56,7 @@ class RelationshipSerializerTest extends TestCase
         $serializer = new RelationshipSerializer($post, 'author');
         $relationship = $serializer->toResourceCollection();
 
-        $this->seeJsonApiResourceObject(['data' => $relationship]);
+        $this->assertJsonApiResourceObject(['data' => $relationship]);
         $this->assertEquals('users', $relationship['type']);
     }
 
@@ -71,7 +71,7 @@ class RelationshipSerializerTest extends TestCase
         $serializer = new RelationshipSerializer($user, 'posts');
         $relationship = $serializer->toResourceCollection();
 
-        $this->seeJsonApiObjectCollection(['data' => $relationship->toArray()], 2);
+        $this->assertJsonApiObjectCollection(['data' => $relationship->toArray()], 2);
 
         foreach ($relationship as $identifier) {
             $this->assertEquals('posts', $identifier['type']);
@@ -95,5 +95,20 @@ class RelationshipSerializerTest extends TestCase
             $this->assertArrayHasKey('created_at', $record['attributes']);
             $this->assertArrayNotHasKey('content', $record['attributes']);
         }
+    }
+
+    /**
+     * Test resolving an invalid relation path.
+     *
+     * @expectedException \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     */
+    public function testInvalidRelationPath()
+    {
+        $user = factory(User::class)
+            ->states('withPosts')
+            ->make();
+
+        $serializer = new RelationshipSerializer($user, 'nonexistent.relation');
+        $serializer->toResourceLinkage();
     }
 }

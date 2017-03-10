@@ -76,7 +76,7 @@ abstract class JsonApiSerializer implements JsonSerializable
             'data' => $this->getPrimaryData(),
             'links' => $this->links->toArray(),
             'meta' => $this->meta->toArray(),
-            'included' => $this->getIncludedData(),
+            'included' => array_filter($this->getIncludedData()),
             'jsonapi' => $this->getDocumentMeta(),
         ]);
     }

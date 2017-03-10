@@ -46,7 +46,7 @@ class ResourceSerializer extends JsonApiSerializer
         parent::__construct();
 
         $this->record = $record;
-        $this->relationships = array_merge($record->getRelations(), $include);
+        $this->relationships = array_merge(array_keys($record->getRelations()), $include);
         $this->fields = array_unique($fields);
         $this->include = array_unique($include);
     }
@@ -69,8 +69,8 @@ class ResourceSerializer extends JsonApiSerializer
     public function toResourceIdentifier()
     {
         return [
-            'type' => $this->getRecordType(),
-            'id' => $this->record->id,
+            'type' => $this->getResourceType(),
+            'id' => $this->getPrimaryKey(),
         ];
     }
 
@@ -102,6 +102,8 @@ class ResourceSerializer extends JsonApiSerializer
     /**
      * Return a collection of JSON API resource objects for each included
      * relationship.
+     *
+     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
      *
      * @return \Illuminate\Support\Collection
      */
@@ -135,15 +137,27 @@ class ResourceSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return the primary record type name.
+     * Return the primary resource type name.
      *
      * @return string
      */
-    protected function getRecordType()
+    protected function getResourceType()
     {
         $modelName = collect(explode('\\', get_class($this->record)))->last();
 
         return snake_case(str_plural($modelName), '-');
+    }
+
+    /**
+     * Return the primary key value for the resource.
+     *
+     * @return int|string
+     */
+    protected function getPrimaryKey()
+    {
+        $value = $this->record->getKey();
+
+        return is_int($value) ? $value : (string) $value;
     }
 
     /**
@@ -155,7 +169,7 @@ class ResourceSerializer extends JsonApiSerializer
     {
         $attributes = array_diff_key($this->record->toArray(), $this->record->getRelations());
         $attributes = array_except($attributes, ['id']);
-        $fields = array_get($this->fields, $this->getRecordType());
+        $fields = array_get($this->fields, $this->getResourceType());
 
         if (!empty($fields)) {
             $attributes = array_only($attributes, $fields);
@@ -168,12 +182,12 @@ class ResourceSerializer extends JsonApiSerializer
      * Return a collection of JSON API resource identifier objects by each
      * relation on the primary record.
      *
+     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     *
      * @return \Illuminate\Support\Collection
      */
     protected function transformRecordRelations()
     {
-        $this->record->load($this->relationships);
-
         return collect($this->relationships)->combine(array_map(function ($relation) {
             return [
                 'data' => (new RelationshipSerializer($this->record, $relation))->toResourceLinkage(),

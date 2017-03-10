@@ -2,8 +2,24 @@
 
 namespace Huntie\JsonApi\Tests\Fixtures\Models;
 
-class Post extends Model
+use Huntie\JsonApi\Contracts\Model\IncludesRelatedResources;
+
+class Post extends Model implements IncludesRelatedResources
 {
+    /**
+     * The relationships which can be included with this resource.
+     *
+     * @return array
+     */
+    public function getIncludableRelations()
+    {
+        return [
+            'author',
+            'comments',
+            'tags',
+        ];
+    }
+
     /**
      * The author of the post.
      *

@@ -66,6 +66,8 @@ class CollectionSerializer extends JsonApiSerializer
      * Return a collection of JSON API resource objects for each included
      * relationship.
      *
+     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     *
      * @return \Illuminate\Support\Collection
      */
     public function getIncludedRecords()

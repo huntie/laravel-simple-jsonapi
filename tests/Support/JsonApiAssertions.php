@@ -3,110 +3,88 @@
 namespace Huntie\JsonApi\Tests\Support;
 
 /**
- * Extend TestCase with additional JSON API assertions.
- *
- * @method seeJsonStructure
+ * Extend TestCase with additional JSON API related assertions.
  */
 trait JsonApiAssertions
 {
     /**
-     * Assert that a document containing a valid JSON API resource identifier
-     * object is returned.
+     * Assert that all given keys are set in an associative array. Nested
+     * members may be specified using dot notation.
      *
-     * @param array|null $responseData
+     * @param array $keys
+     * @param array $array
      *
-     * @return $this
+     * @throws PHPUnit_Framework_AssertionFailedError
      */
-    public function seeJsonApiResourceIdentifier($responseData = null)
+    public function assertArrayHasAll(array $keys, array $array)
     {
-        return $this->seeJsonStructure([
-            'data' => [
-                'type',
-                'id',
-            ]
-        ], $responseData);
+        foreach ($keys as $key) {
+            if (!array_has($array, $key)) {
+                $this->fail('Failed asserting that key "' . $key . '" exists in input array.');
+            }
+        }
     }
 
     /**
-     * Assert that a document containing a valid JSON API resource object is
-     * returned.
+     * Assert that an array contains a valid JSON API resource identifier.
      *
-     * @param array|null $responseData
+     * @param array $array
      *
-     * @return $this
+     * @throws PHPUnit_Framework_AssertionFailedError
      */
-    public function seeJsonApiResourceObject($responseData = null)
+    public function assertJsonApiResourceIdentifier(array $array)
     {
-        return $this->seeJsonStructure([
-            'data' => [
-                'type',
-                'id',
-                'attributes',
-            ]
-        ], $responseData);
+        $this->assertArrayHasAll(['data.type', 'data.id'], $array);
     }
 
     /**
-     * Assert that a document containing a valid JSON API resource identifier
-     * object collection is returned.
+     * Assert that an array contains a valid JSON API resource object.
      *
-     * @param array|null $responseData
-     * @param int|null   $count
+     * @param array $array
      *
-     * @return $this
+     * @throws PHPUnit_Framework_AssertionFailedError
      */
-    public function seeJsonApiIdentifierCollection($responseData = null, $count = null)
+    public function assertJsonApiResourceObject(array $array)
     {
-        return $this->seeJsonApiCollection([
-            'type',
-            'id',
-        ], $responseData, $count);
+        $this->assertArrayHasAll(['data.type', 'data.id', 'data.attributes'], $array);
     }
 
     /**
-     * Assert that a document containing a valid JSON API resource object
-     * collection is returned.
+     * Assert that an array contains a valid JSON API resource identifier
+     * object collection.
      *
-     * @param array|null $responseData
-     * @param int|null   $count
+     * @param array $array
+     * @param int   $count
      *
-     * @return $this
+     * @throws PHPUnit_Framework_AssertionFailedError
      */
-    public function seeJsonApiObjectCollection($responseData = null, $count = null)
+    public function assertJsonApiIdentifierCollection(array $array, $count = null)
     {
-        return $this->seeJsonApiCollection([
-            'type',
-            'id',
-            'attributes',
-        ], $responseData, $count);
-    }
+        $this->assertArrayHasKey('data', $array, 'No data key for collection');
 
-    /**
-     * Assert that a JSON API document contains a collection of objects defined
-     * by a given pattern.
-     *
-     * @param array      $pattern
-     * @param array|null $responseData
-     * @param int|null   $count
-     *
-     * @return $this
-     */
-    private function seeJsonApiCollection($pattern, $responseData = null, $count = null)
-    {
-        if (!$responseData) {
-            $responseData = json_decode($this->response->getContent(), true);
+        foreach ($array['data'] as $identifier) {
+            $this->assertArrayHasAll(['type', 'id'], (array) $identifier);
         }
 
-        $this->seeJsonStructure([
-            'data' => [
-                '*' => $pattern,
-            ]
-        ], $responseData);
+        $this->assertCount($count, $array['data'], 'Incorrect object count returned in collection');
+    }
 
-        if ($count) {
-            $this->assertCount($count, $responseData['data'], 'Incorrect object count returned in collection');
+    /**
+     * Assert that an array contains a valid JSON API resource object collection.
+     *
+     * @param array $array
+     * @param int   $count
+     *
+     * @throws PHPUnit_Framework_AssertionFailedError
+     */
+    public function assertJsonApiObjectCollection(array $array, $count = null)
+    {
+        $this->assertArrayHasKey('data', $array, 'No data key for collection');
+
+        foreach ($array['data'] as $object) {
+            $this->assertArrayHasAll(['type', 'id', 'attributes'], (array) $object);
         }
 
-        return $this;
+        $this->assertCount($count, $array['data'], 'Incorrect object count returned in collection');
     }
 }
