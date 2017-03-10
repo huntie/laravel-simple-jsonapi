@@ -2,7 +2,7 @@
 
 namespace Tests;
 
-use Tests\Support\JsonApiAssertions;
+use Huntie\JsonApi\Testing\JsonApiAssertions;
 
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {
