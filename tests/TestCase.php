@@ -1,8 +1,8 @@
 <?php
 
-namespace Huntie\JsonApi\Tests;
+namespace Tests;
 
-use Huntie\JsonApi\Tests\Support\JsonApiAssertions;
+use Huntie\JsonApi\Testing\JsonApiAssertions;
 
 abstract class TestCase extends \Orchestra\Testbench\TestCase
 {

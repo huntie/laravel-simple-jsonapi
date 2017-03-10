@@ -1,11 +1,11 @@
 <?php
 
-namespace Huntie\JsonApi\Tests\Serializers;
+namespace Tests\Serializers;
 
 use Huntie\JsonApi\Serializers\RelationshipSerializer;
-use Huntie\JsonApi\Tests\TestCase;
-use Huntie\JsonApi\Tests\Fixtures\Models\Post;
-use Huntie\JsonApi\Tests\Fixtures\Models\User;
+use Tests\TestCase;
+use Tests\Fixtures\Models\Post;
+use Tests\Fixtures\Models\User;
 
 class RelationshipSerializerTest extends TestCase
 {

@@ -1,9 +1,9 @@
 <?php
 
 use Faker\Generator;
-use Huntie\JsonApi\Tests\Fixtures\Models\Comment;
-use Huntie\JsonApi\Tests\Fixtures\Models\Post;
-use Huntie\JsonApi\Tests\Fixtures\Models\User;
+use Tests\Fixtures\Models\Comment;
+use Tests\Fixtures\Models\Post;
+use Tests\Fixtures\Models\User;
 
 $factory->define(User::class, function (Generator $faker) {
     return [

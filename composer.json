@@ -44,7 +44,7 @@
     },
     "autoload-dev": {
         "psr-4": {
-            "Huntie\\JsonApi\\Tests\\": "tests/"
+            "Tests\\": "tests/"
         }
     }
 }
