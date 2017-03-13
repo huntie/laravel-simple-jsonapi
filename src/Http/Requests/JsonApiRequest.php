@@ -50,9 +50,15 @@ abstract class JsonApiRequest extends FormRequest
 
     /**
      * Perform additional logic before the request input is validated.
+     *
+     * @throws HttpException
      */
     protected function beforeValidation()
     {
+        if (!$this->isJson()) {
+            throw new HttpException('Unsupported Content-Type', Reponse::HTTP_UNSUPPORTED_MEDIA_TYPE);
+        }
+
         if ($this->exists('include') && config('jsonapi.enable_included_resources') === false) {
             throw new HttpException('Inclusion of related resources is not supported');
         }
