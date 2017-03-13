@@ -97,8 +97,8 @@ abstract class JsonApiController extends Controller
     /**
      * Return a specified record.
      *
-     * @param Request   $request
-     * @param Model|int $record
+     * @param Request     $request
+     * @param Model|mixed $record
      *
      * @return JsonApiResponse
      */
@@ -114,8 +114,8 @@ abstract class JsonApiController extends Controller
     /**
      * Update a specified record.
      *
-     * @param Request   $request
-     * @param Model|int $record
+     * @param Request     $request
+     * @param Model|mixed $record
      *
      * @return JsonApiResponse
      */
@@ -135,8 +135,8 @@ abstract class JsonApiController extends Controller
     /**
      * Destroy a specified record.
      *
-     * @param Request   $request
-     * @param Model|int $record
+     * @param Request     $request
+     * @param Model|mixed $record
      *
      * @return JsonApiResponse
      */
@@ -151,9 +151,9 @@ abstract class JsonApiController extends Controller
     /**
      * Return a specified record relationship.
      *
-     * @param Request   $request
-     * @param Model|int $record
-     * @param string    $relation
+     * @param Request     $request
+     * @param Model|mixed $record
+     * @param string      $relation
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      *
@@ -173,7 +173,7 @@ abstract class JsonApiController extends Controller
      * http://jsonapi.org/format/#crud-updating-to-one-relationships
      *
      * @param Request     $request
-     * @param Model|int   $record
+     * @param Model|mixed $record
      * @param string      $relation
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
@@ -198,9 +198,9 @@ abstract class JsonApiController extends Controller
      * Update named many-to-many relationship entries on a specified record.
      * http://jsonapi.org/format/#crud-updating-to-many-relationships
      *
-     * @param Request   $request
-     * @param Model|int $record
-     * @param string    $relation
+     * @param Request     $request
+     * @param Model|mixed $record
+     * @param string      $relation
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      *
@@ -239,7 +239,7 @@ abstract class JsonApiController extends Controller
     /**
      * Return existing instance of the resource or find by primary key.
      *
-     * @param Model|int $record
+     * @param Model|mixed $record
      *
      * @throws ModelNotFoundException
      *
