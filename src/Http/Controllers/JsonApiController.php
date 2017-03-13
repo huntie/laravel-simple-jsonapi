@@ -2,12 +2,12 @@
 
 namespace Huntie\JsonApi\Http\Controllers;
 
-use Schema;
 use Validator;
 use Huntie\JsonApi\Contracts\Model\IncludesRelatedResources;
 use Huntie\JsonApi\Exceptions\HttpException;
 use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Huntie\JsonApi\Http\JsonApiResponse;
+use Huntie\JsonApi\Http\Concerns\QueriesResources;
 use Huntie\JsonApi\Serializers\CollectionSerializer;
 use Huntie\JsonApi\Serializers\RelationshipSerializer;
 use Huntie\JsonApi\Serializers\ResourceSerializer;
@@ -27,6 +27,7 @@ use Illuminate\Validation\ValidationException;
 abstract class JsonApiController extends Controller
 {
     use JsonApiErrors;
+    use QueriesResources;
     use AuthorizesRequests;
     use ValidatesRequests;
 
@@ -331,56 +332,6 @@ abstract class JsonApiController extends Controller
                 throw new InvalidRelationPathException($relation);
             }
         }
-    }
-
-    /**
-     * Sort a resource query by one or more attributes.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array                                 $attributes
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    protected function sortQuery($query, $attributes)
-    {
-        foreach ($attributes as $expression) {
-            $direction = substr($expression, 0, 1) === '-' ? 'desc' : 'asc';
-            $column = preg_replace('/^\-/', '', $expression);
-            $query = $query->orderBy($column, $direction);
-        }
-
-        return $query;
-    }
-
-    /**
-     * Filter a resource query by one or more attributes.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array                                 $attributes
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    protected function filterQuery($query, $attributes)
-    {
-        $searchableColumns = array_diff(
-            Schema::getColumnListing($this->getModel()->getTable()),
-            $this->getModel()->getHidden()
-        );
-
-        foreach (array_intersect_key($attributes, array_flip($searchableColumns)) as $column => $value) {
-            if (is_numeric($value)) {
-                // Exact numeric match
-                $query = $query->where($column, $value);
-            } else if (in_array(strtolower($value), ['true', 'false'])) {
-                // Boolean match
-                $query = $query->where($column, filter_var($value, FILTER_VALIDATE_BOOLEAN));
-            } else {
-                // Partial string match
-                $query = $query->where($column, 'LIKE', '%' . $value . '%');
-            }
-        }
-
-        return $query;
     }
 
     /**
