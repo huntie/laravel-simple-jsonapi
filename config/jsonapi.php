@@ -4,6 +4,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Model namespace
+    |--------------------------------------------------------------------------
+    |
+    | The full namespace containing the application's models. Used when
+    | inferring the primary resource model in JsonApiController, which can
+    | also be set manually through the $model property. Defaults to the
+    | application namespace.
+    |
+    */
+
+    'model_namespace' => '',
+
+    /*
+    |--------------------------------------------------------------------------
     | Include JSON API version
     |--------------------------------------------------------------------------
     |

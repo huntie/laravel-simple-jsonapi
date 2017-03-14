@@ -32,11 +32,26 @@ abstract class JsonApiController extends Controller
     use ValidatesRequests;
 
     /**
-     * Return the Eloquent Model for the resource.
+     * The Eloquent Model for the resource.
      *
-     * @return Model
+     * @var Model|string
      */
-    abstract protected function getModel();
+    protected $model;
+
+    /**
+     * Create a new JsonApiController instance.
+     */
+    public function __construct()
+    {
+        if (is_string($this->model)) {
+            if (!is_subclass_of($this->model, Model::class)) {
+                $this->model = str_finish(config('jsonapi.model_namespace', app()->getNamespace()), '\\')
+                    . preg_replace('/Controller$/', '', class_basename($this));
+            }
+
+            $this->model = new $this->model;
+        }
+    }
 
     /**
      * The model relationships that can be updated.
@@ -58,7 +73,7 @@ abstract class JsonApiController extends Controller
      */
     public function indexAction(Request $request, $query = null)
     {
-        $records = $query ?: $this->getModel()->newQuery();
+        $records = $query ?: $this->model->newQuery();
         $params = $this->getRequestParameters($request);
         $this->validateIncludableRelations($params['include']);
 
@@ -66,7 +81,7 @@ abstract class JsonApiController extends Controller
         $records = $this->filterQuery($records, $params['filter']);
 
         try {
-            $pageSize = min($this->getModel()->getPerPage(), $request->input('page.size'));
+            $pageSize = min($this->model->getPerPage(), $request->input('page.size'));
             $pageNumber = $request->input('page.number') ?: 1;
 
             $records = $records->paginate($pageSize, null, 'page', $pageNumber);
@@ -86,7 +101,7 @@ abstract class JsonApiController extends Controller
      */
     public function storeAction(Request $request)
     {
-        $record = $this->getModel()->create((array) $request->input('data.attributes'));
+        $record = $this->model->create((array) $request->input('data.attributes'));
 
         if ($relationships = $request->input('data.relationships')) {
             $this->updateRecordRelationships($record, (array) $relationships);
@@ -256,7 +271,7 @@ abstract class JsonApiController extends Controller
             return $record;
         }
 
-        return $this->getModel()->findOrFail($record);
+        return $this->model->findOrFail($record);
     }
 
     /**
@@ -325,10 +340,8 @@ abstract class JsonApiController extends Controller
             return;
         }
 
-        $model = $this->getModel();
-
         foreach ($relations as $relation) {
-            if (!$model instanceof IncludesRelatedResources || !in_array($relation, $model->getIncludableRelations())) {
+            if (!$this->model instanceof IncludesRelatedResources || !in_array($relation, $this->model->getIncludableRelations())) {
                 throw new InvalidRelationPathException($relation);
             }
         }
