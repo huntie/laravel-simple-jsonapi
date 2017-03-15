@@ -8,6 +8,7 @@ use Huntie\JsonApi\Exceptions\HttpException;
 use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Huntie\JsonApi\Http\JsonApiResponse;
 use Huntie\JsonApi\Http\Concerns\QueriesResources;
+use Huntie\JsonApi\Http\Concerns\UpdatesModelRelations;
 use Huntie\JsonApi\Serializers\CollectionSerializer;
 use Huntie\JsonApi\Serializers\RelationshipSerializer;
 use Huntie\JsonApi\Serializers\ResourceSerializer;
@@ -15,8 +16,6 @@ use Huntie\JsonApi\Support\JsonApiErrors;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
@@ -28,6 +27,7 @@ abstract class JsonApiController extends Controller
 {
     use JsonApiErrors;
     use QueriesResources;
+    use UpdatesModelRelations;
     use AuthorizesRequests;
     use ValidatesRequests;
 
@@ -51,16 +51,6 @@ abstract class JsonApiController extends Controller
 
             $this->model = new $this->model;
         }
-    }
-
-    /**
-     * The model relationships that can be updated.
-     *
-     * @return array
-     */
-    protected function getModelRelationships()
-    {
-        return [];
     }
 
     /**
@@ -104,7 +94,7 @@ abstract class JsonApiController extends Controller
         $record = $this->model->create((array) $request->input('data.attributes'));
 
         if ($relationships = $request->input('data.relationships')) {
-            $this->updateRecordRelationships($record, (array) $relationships);
+            $this->updateResourceRelationships($record, (array) $relationships);
         }
 
         return new JsonApiResponse(new ResourceSerializer($record), Response::HTTP_CREATED);
@@ -171,14 +161,10 @@ abstract class JsonApiController extends Controller
      * @param Model|mixed $record
      * @param string      $relation
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-     *
      * @return JsonApiResponse
      */
     public function relationshipAction(Request $request, $record, $relation)
     {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
-
         $record = $this->findModelInstance($record);
 
         return new JsonApiResponse(new RelationshipSerializer($record, $relation));
@@ -198,7 +184,7 @@ abstract class JsonApiController extends Controller
      */
     public function updateToOneRelationshipAction(Request $request, $record, $relation)
     {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
+        abort_unless($this->isFillableRelation($relation), Response::HTTP_NOT_FOUND);
 
         $record = $this->findModelInstance($record);
         $relation = $this->getModelRelationships()[$relation];
@@ -224,7 +210,7 @@ abstract class JsonApiController extends Controller
      */
     public function updateToManyRelationshipAction(Request $request, $record, $relation)
     {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
+        abort_unless($this->isFillableRelation($relation), Response::HTTP_NOT_FOUND);
 
         $record = $this->findModelInstance($record);
         $relationships = (array) $request->input('data');
@@ -343,29 +329,6 @@ abstract class JsonApiController extends Controller
         foreach ($relations as $relation) {
             if (!$this->model instanceof IncludesRelatedResources || !in_array($relation, $this->model->getIncludableRelations())) {
                 throw new InvalidRelationPathException($relation);
-            }
-        }
-    }
-
-    /**
-     * Update one or more relationships on a model instance.
-     *
-     * @param Model $record
-     * @param array $relationships
-     */
-    protected function updateRecordRelationships($record, array $relationships)
-    {
-        $relationships = array_intersect_key($relationships, $this->getModelRelationships());
-
-        foreach ($relationships as $name => $relationship) {
-            $relation = $this->getModelRelationships()[$name];
-            $data = $relationship['data'];
-
-            if ($relation instanceof BelongsTo) {
-                $record->{$relation->getForeignKey()} = $data['id'];
-                $record->save();
-            } else if ($relation instanceof BelongsToMany) {
-                $record->{$name}()->sync(array_pluck($data, 'id'));
             }
         }
     }
