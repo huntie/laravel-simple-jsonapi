@@ -7,12 +7,7 @@ use Illuminate\Http\Request;
 /**
  * Add default resource controller methods for JsonApiController actions.
  *
- * @method indexAction(Request $request)
- * @method storeAction(Request $request)
- * @method showAction(Request $request, int $id)
- * @method updateAction(Request $request, int $id)
- * @method destroyAction(Request $request, int $id)
- * @method relationshipAction(Request $request, int $id, string $relation)
+ * @return JsonApiController
  */
 trait JsonApiControllerActions
 {
@@ -88,8 +83,8 @@ trait JsonApiControllerActions
      *
      * @return \Huntie\JsonApi\Http\JsonApiResponse
      */
-    public function relationship(Request $request, $id, $relation)
+    public function showRelationship(Request $request, $id, $relation)
     {
-        return $this->relationshipAction($request, $id, $relation);
+        return $this->showRelationshipAction($request, $id, $relation);
     }
 }

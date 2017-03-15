@@ -163,7 +163,7 @@ abstract class JsonApiController extends Controller
      *
      * @return JsonApiResponse
      */
-    public function relationshipAction(Request $request, $record, $relation)
+    public function showRelationshipAction(Request $request, $record, $relation)
     {
         $record = $this->findModelInstance($record);
 
