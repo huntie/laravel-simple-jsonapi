@@ -17,7 +17,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Routing\Controller;
 use Illuminate\Validation\ValidationException;
@@ -55,12 +54,12 @@ abstract class JsonApiController extends Controller
     /**
      * Return a listing of the resource.
      *
-     * @param Request                                    $request
-     * @param \Illuminate\Database\Eloquent\Builder|null $query   Custom resource query
+     * @param \Huntie\JsonApi\Http\Requests\JsonApiRequest $request
+     * @param \Illuminate\Database\Eloquent\Builder|null   $query   Custom resource query
      *
      * @return JsonApiResponse
      */
-    public function indexAction(Request $request, $query = null)
+    public function indexAction($request, $query = null)
     {
         $records = $query ?: $this->model->newQuery();
         $params = $this->getRequestParameters($request);
@@ -84,11 +83,11 @@ abstract class JsonApiController extends Controller
     /**
      * Store a new record.
      *
-     * @param Request $request
+     * @param \Huntie\JsonApi\Http\Requests\JsonApiRequest $request
      *
      * @return JsonApiResponse
      */
-    public function storeAction(Request $request)
+    public function storeAction($request)
     {
         $record = $this->model->create((array) $request->input('data.attributes'));
 
@@ -102,12 +101,12 @@ abstract class JsonApiController extends Controller
     /**
      * Return a specified record.
      *
-     * @param Request     $request
-     * @param Model|mixed $record
+     * @param \Huntie\JsonApi\Http\Requests\JsonApiRequest $request
+     * @param Model|mixed                                  $record
      *
      * @return JsonApiResponse
      */
-    public function showAction(Request $request, $record)
+    public function showAction($request, $record)
     {
         $record = $this->findModelInstance($record);
         $params = $this->getRequestParameters($request);
@@ -119,12 +118,12 @@ abstract class JsonApiController extends Controller
     /**
      * Update a specified record.
      *
-     * @param Request     $request
-     * @param Model|mixed $record
+     * @param \Huntie\JsonApi\Http\Requests\JsonApiRequest $request
+     * @param Model|mixed                                  $record
      *
      * @return JsonApiResponse
      */
-    public function updateAction(Request $request, $record)
+    public function updateAction($request, $record)
     {
         $record = $this->findModelInstance($record);
         $record->fill((array) $request->input('data.attributes'));
@@ -140,12 +139,12 @@ abstract class JsonApiController extends Controller
     /**
      * Destroy a specified record.
      *
-     * @param Request     $request
-     * @param Model|mixed $record
+     * @param \Huntie\JsonApi\Http\Requests\JsonApiRequest $request
+     * @param Model|mixed                                  $record
      *
      * @return JsonApiResponse
      */
-    public function destroyAction(Request $request, $record)
+    public function destroyAction($request, $record)
     {
         $record = $this->findModelInstance($record);
         $record->delete();
@@ -156,13 +155,13 @@ abstract class JsonApiController extends Controller
     /**
      * Return a specified record relationship.
      *
-     * @param Request     $request
-     * @param Model|mixed $record
-     * @param string      $relation
+     * @param \Huntie\JsonApi\Http\Requests\JsonApiRequest $request
+     * @param Model|mixed                                  $record
+     * @param string                                       $relation
      *
      * @return JsonApiResponse
      */
-    public function showRelationshipAction(Request $request, $record, $relation)
+    public function showRelationshipAction($request, $record, $relation)
     {
         $record = $this->findModelInstance($record);
 
@@ -174,15 +173,15 @@ abstract class JsonApiController extends Controller
      *
      * http://jsonapi.org/format/#crud-updating-relationships
      *
-     * @param Request     $request
-     * @param Model|mixed $record
-     * @param string      $relation
+     * @param \Huntie\JsonApi\Http\Requests\JsonApiRequest $request
+     * @param Model|mixed                                  $record
+     * @param string                                       $relation
      *
      * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
      *
      * @return JsonApiResponse
      */
-    public function updateRelationshipAction(Request $request, $record, $relation)
+    public function updateRelationshipAction($request, $record, $relation)
     {
         $relationType = $this->getRelationType($relation);
         abort_unless(is_string($relationType) && $this->isFillableRelation($relation), Response::HTTP_NOT_FOUND);
