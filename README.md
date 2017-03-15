@@ -31,7 +31,7 @@ The main class in this package is `JsonApiController`, which provides a full set
 
 ### 1. Define routes
 
-Add a [RESTful resource route](https://laravel.com/docs/5.2/controllers#restful-resource-controllers) for the target model in `routes.php`.
+Add a [RESTful resource route](https://laravel.com/docs/master/controllers#restful-resource-controllers) for the target model in `routes.php`.
 
 ```php
 Route::resource('users', 'UserController');
@@ -47,14 +47,13 @@ Route::resource('users', 'UserController', [
 
 ### 2. Add controller
 
-Our new controller for this resource needs to extend `JsonApiController` and use the `JsonApiControllerActions` trait. The base information to provide is the type of `Model` this controller is for, by implementing the abstract method `getModel`.
+Our new controller for this resource needs to extend `JsonApiController` and use the `JsonApiControllerActions` trait. The model for the primary resource is inferred by default from the controller name, but this can also be set on the `$model` property.
 
 ```php
 <?php
 
 namespace App\Http\Controllers;
 
-use App\User;
 use Huntie\JsonApi\Http\Controllers\JsonApiController;
 use Huntie\JsonApi\Http\Controllers\JsonApiControllerActions;
 
@@ -63,24 +62,21 @@ class UserController extends JsonApiController
     use JsonApiControllerActions;
 
     /**
-     * Return the related Eloquent Model.
+     * The related Eloquent Model.
      *
-     * @return Model
+     * @var Model|string
      */
-    protected function getModel()
-    {
-        return new User();
-    }
+    protected $model = 'App\User';
 }
 ```
 
-The trait `JsonApiControllerActions` is important. It defines each endpoint `index`, `store`, `show`, `update`, `destroy` at the class level and calls the relevant parent controller method, e.g. `indexAction`. This allows us to override particular controller actions, meaning we can specify additional parameters as well as a different type-hinted request class for [Form Request Validation](https://laravel.com/docs/5.2/validation#form-request-validation).
+The trait `JsonApiControllerActions` is important. It defines each endpoint `index`, `store`, `show`, `update`, `destroy` at the class level and calls the relevant parent controller method, e.g. `indexAction`. This allows us to override particular controller actions, meaning we can specify additional parameters as well as a different type-hinted request class for [Form Request Validation](https://laravel.com/docs/master/validation#form-request-validation).
 
 The controller now will respond to each endpoint for this resource where a route has been defined.
 
 #### Implicit model transformation
 
-Whenever a model is tranformed into a JSON API Object or Collection, the built-in properties and methods defined on your Eloquent Model, such as `$casts`, `$hidden`, and `$appends` will apply automatically, removing the need for separate model tranformation logic. See [the Laravel docs](https://laravel.com/docs/5.2/eloquent) for more information on what is available.
+Whenever a model is tranformed into a JSON API Object or Collection, the built-in properties and methods defined on your Eloquent Model, such as `$casts`, `$hidden`, and `$appends` will apply automatically, removing the need for separate model tranformation logic. See [the Laravel docs](https://laravel.com/docs/master/eloquent) for more information on what is available.
 
 This package uses these Eloquent features heavily – the examples demonstrate further how these are applied.
 
@@ -122,7 +118,7 @@ There are a number of contexts where you may return error responses as formatted
 
 ### Form validation
 
-Implementing a [Form Request validation class](https://laravel.com/docs/5.2/validation#form-request-validation) that extends `JsonApiRequest` will format any validation errors appropriately when a validation error occurs.
+Implementing a [Form Request validation class](https://laravel.com/docs/master/validation#form-request-validation) that extends `JsonApiRequest` will format any validation errors appropriately when a validation error occurs.
 
 ```php
 <?php

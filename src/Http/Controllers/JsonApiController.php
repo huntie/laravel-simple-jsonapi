@@ -2,12 +2,13 @@
 
 namespace Huntie\JsonApi\Http\Controllers;
 
-use Schema;
 use Validator;
 use Huntie\JsonApi\Contracts\Model\IncludesRelatedResources;
 use Huntie\JsonApi\Exceptions\HttpException;
 use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Huntie\JsonApi\Http\JsonApiResponse;
+use Huntie\JsonApi\Http\Concerns\QueriesResources;
+use Huntie\JsonApi\Http\Concerns\UpdatesModelRelations;
 use Huntie\JsonApi\Serializers\CollectionSerializer;
 use Huntie\JsonApi\Serializers\RelationshipSerializer;
 use Huntie\JsonApi\Serializers\ResourceSerializer;
@@ -15,8 +16,6 @@ use Huntie\JsonApi\Support\JsonApiErrors;
 use Illuminate\Database\QueryException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Foundation\Validation\ValidatesRequests;
 use Illuminate\Http\Request;
@@ -27,24 +26,31 @@ use Illuminate\Validation\ValidationException;
 abstract class JsonApiController extends Controller
 {
     use JsonApiErrors;
+    use QueriesResources;
+    use UpdatesModelRelations;
     use AuthorizesRequests;
     use ValidatesRequests;
 
     /**
-     * Return the Eloquent Model for the resource.
+     * The Eloquent Model for the resource.
      *
-     * @return Model
+     * @var Model|string
      */
-    abstract protected function getModel();
+    protected $model;
 
     /**
-     * The model relationships that can be updated.
-     *
-     * @return array
+     * Create a new JsonApiController instance.
      */
-    protected function getModelRelationships()
+    public function __construct()
     {
-        return [];
+        if (is_string($this->model)) {
+            if (!is_subclass_of($this->model, Model::class)) {
+                $this->model = str_finish(config('jsonapi.model_namespace', app()->getNamespace()), '\\')
+                    . preg_replace('/Controller$/', '', class_basename($this));
+            }
+
+            $this->model = new $this->model;
+        }
     }
 
     /**
@@ -57,7 +63,7 @@ abstract class JsonApiController extends Controller
      */
     public function indexAction(Request $request, $query = null)
     {
-        $records = $query ?: $this->getModel()->newQuery();
+        $records = $query ?: $this->model->newQuery();
         $params = $this->getRequestParameters($request);
         $this->validateIncludableRelations($params['include']);
 
@@ -65,7 +71,7 @@ abstract class JsonApiController extends Controller
         $records = $this->filterQuery($records, $params['filter']);
 
         try {
-            $pageSize = min($this->getModel()->getPerPage(), $request->input('page.size'));
+            $pageSize = min($this->model->getPerPage(), $request->input('page.size'));
             $pageNumber = $request->input('page.number') ?: 1;
 
             $records = $records->paginate($pageSize, null, 'page', $pageNumber);
@@ -85,10 +91,10 @@ abstract class JsonApiController extends Controller
      */
     public function storeAction(Request $request)
     {
-        $record = $this->getModel()->create((array) $request->input('data.attributes'));
+        $record = $this->model->create((array) $request->input('data.attributes'));
 
         if ($relationships = $request->input('data.relationships')) {
-            $this->updateRecordRelationships($record, (array) $relationships);
+            $this->updateResourceRelationships($record, (array) $relationships);
         }
 
         return new JsonApiResponse(new ResourceSerializer($record), Response::HTTP_CREATED);
@@ -155,22 +161,19 @@ abstract class JsonApiController extends Controller
      * @param Model|mixed $record
      * @param string      $relation
      *
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-     *
      * @return JsonApiResponse
      */
-    public function relationshipAction(Request $request, $record, $relation)
+    public function showRelationshipAction(Request $request, $record, $relation)
     {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
-
         $record = $this->findModelInstance($record);
 
         return new JsonApiResponse(new RelationshipSerializer($record, $relation));
     }
 
     /**
-     * Update a named many-to-one relationship association on a specified record.
-     * http://jsonapi.org/format/#crud-updating-to-one-relationships
+     * Update a named relationship on a specified record.
+     *
+     * http://jsonapi.org/format/#crud-updating-relationships
      *
      * @param Request     $request
      * @param Model|mixed $record
@@ -180,57 +183,17 @@ abstract class JsonApiController extends Controller
      *
      * @return JsonApiResponse
      */
-    public function updateToOneRelationshipAction(Request $request, $record, $relation)
+    public function updateRelationshipAction(Request $request, $record, $relation)
     {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
-
         $record = $this->findModelInstance($record);
-        $relation = $this->getModelRelationships()[$relation];
-        $data = (array) $request->input('data');
+        $relationType = $this->getRelationType($relation);
 
-        $record->{$relation->getForeignKey()} = $data['id'];
-        $record->save();
+        abort_unless(is_string($relationType) && $this->isFillableRelation($relation), Response::HTTP_NOT_FOUND);
 
-        return new JsonApiResponse(new RelationshipSerializer($record, $relation));
-    }
-
-    /**
-     * Update named many-to-many relationship entries on a specified record.
-     * http://jsonapi.org/format/#crud-updating-to-many-relationships
-     *
-     * @param Request     $request
-     * @param Model|mixed $record
-     * @param string      $relation
-     *
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-     *
-     * @return JsonApiResponse
-     */
-    public function updateToManyRelationshipAction(Request $request, $record, $relation)
-    {
-        abort_if(!array_key_exists($relation, $this->getModelRelationships()), Response::HTTP_NOT_FOUND);
-
-        $record = $this->findModelInstance($record);
-        $relationships = (array) $request->input('data');
-        $items = [];
-
-        foreach ($relationships as $item) {
-            if (isset($item['attributes'])) {
-                $items[$item['id']] = $item['attributes'];
-            } else {
-                $items[] = $item['id'];
-            }
-        }
-
-        switch ($request->method()) {
-            case 'PATCH':
-                $record->{$relation}()->sync($items);
-                break;
-            case 'POST':
-                $record->{$relation}()->sync($items, false);
-                break;
-            case 'DELETE':
-                $record->{$relation}()->detach(array_keys($items));
+        if ($relationType === 'To-One') {
+            $this->updateToOneResourceRelationship($record, $relation, $request->input('data'));
+        } else if ($relationType === 'To-Many') {
+            $this->updateToManyResourceRelationship($record, $relation, $request->input('data'), $request->method());
         }
 
         return new JsonApiResponse(new RelationshipSerializer($record, $relation));
@@ -255,7 +218,7 @@ abstract class JsonApiController extends Controller
             return $record;
         }
 
-        return $this->getModel()->findOrFail($record);
+        return $this->model->findOrFail($record);
     }
 
     /**
@@ -324,84 +287,9 @@ abstract class JsonApiController extends Controller
             return;
         }
 
-        $model = $this->getModel();
-
         foreach ($relations as $relation) {
-            if (!$model instanceof IncludesRelatedResources || !in_array($relation, $model->getIncludableRelations())) {
+            if (!$this->model instanceof IncludesRelatedResources || !in_array($relation, $this->model->getIncludableRelations())) {
                 throw new InvalidRelationPathException($relation);
-            }
-        }
-    }
-
-    /**
-     * Sort a resource query by one or more attributes.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array                                 $attributes
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    protected function sortQuery($query, $attributes)
-    {
-        foreach ($attributes as $expression) {
-            $direction = substr($expression, 0, 1) === '-' ? 'desc' : 'asc';
-            $column = preg_replace('/^\-/', '', $expression);
-            $query = $query->orderBy($column, $direction);
-        }
-
-        return $query;
-    }
-
-    /**
-     * Filter a resource query by one or more attributes.
-     *
-     * @param \Illuminate\Database\Eloquent\Builder $query
-     * @param array                                 $attributes
-     *
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    protected function filterQuery($query, $attributes)
-    {
-        $searchableColumns = array_diff(
-            Schema::getColumnListing($this->getModel()->getTable()),
-            $this->getModel()->getHidden()
-        );
-
-        foreach (array_intersect_key($attributes, array_flip($searchableColumns)) as $column => $value) {
-            if (is_numeric($value)) {
-                // Exact numeric match
-                $query = $query->where($column, $value);
-            } else if (in_array(strtolower($value), ['true', 'false'])) {
-                // Boolean match
-                $query = $query->where($column, filter_var($value, FILTER_VALIDATE_BOOLEAN));
-            } else {
-                // Partial string match
-                $query = $query->where($column, 'LIKE', '%' . $value . '%');
-            }
-        }
-
-        return $query;
-    }
-
-    /**
-     * Update one or more relationships on a model instance.
-     *
-     * @param Model $record
-     * @param array $relationships
-     */
-    protected function updateRecordRelationships($record, array $relationships)
-    {
-        $relationships = array_intersect_key($relationships, $this->getModelRelationships());
-
-        foreach ($relationships as $name => $relationship) {
-            $relation = $this->getModelRelationships()[$name];
-            $data = $relationship['data'];
-
-            if ($relation instanceof BelongsTo) {
-                $record->{$relation->getForeignKey()} = $data['id'];
-                $record->save();
-            } else if ($relation instanceof BelongsToMany) {
-                $record->{$name}()->sync(array_pluck($data, 'id'));
             }
         }
     }
