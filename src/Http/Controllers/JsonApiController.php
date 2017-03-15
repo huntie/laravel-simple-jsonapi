@@ -171,8 +171,9 @@ abstract class JsonApiController extends Controller
     }
 
     /**
-     * Update a named many-to-one relationship association on a specified record.
-     * http://jsonapi.org/format/#crud-updating-to-one-relationships
+     * Update a named relationship on a specified record.
+     *
+     * http://jsonapi.org/format/#crud-updating-relationships
      *
      * @param Request     $request
      * @param Model|mixed $record
@@ -182,57 +183,17 @@ abstract class JsonApiController extends Controller
      *
      * @return JsonApiResponse
      */
-    public function updateToOneRelationshipAction(Request $request, $record, $relation)
+    public function updateRelationshipAction(Request $request, $record, $relation)
     {
-        abort_unless($this->isFillableRelation($relation), Response::HTTP_NOT_FOUND);
-
         $record = $this->findModelInstance($record);
-        $relation = $this->getModelRelationships()[$relation];
-        $data = (array) $request->input('data');
+        $relationType = $this->getRelationType($relation);
 
-        $record->{$relation->getForeignKey()} = $data['id'];
-        $record->save();
+        abort_unless(is_string($relationType) && $this->isFillableRelation($relation), Response::HTTP_NOT_FOUND);
 
-        return new JsonApiResponse(new RelationshipSerializer($record, $relation));
-    }
-
-    /**
-     * Update named many-to-many relationship entries on a specified record.
-     * http://jsonapi.org/format/#crud-updating-to-many-relationships
-     *
-     * @param Request     $request
-     * @param Model|mixed $record
-     * @param string      $relation
-     *
-     * @throws \Symfony\Component\HttpKernel\Exception\NotFoundHttpException
-     *
-     * @return JsonApiResponse
-     */
-    public function updateToManyRelationshipAction(Request $request, $record, $relation)
-    {
-        abort_unless($this->isFillableRelation($relation), Response::HTTP_NOT_FOUND);
-
-        $record = $this->findModelInstance($record);
-        $relationships = (array) $request->input('data');
-        $items = [];
-
-        foreach ($relationships as $item) {
-            if (isset($item['attributes'])) {
-                $items[$item['id']] = $item['attributes'];
-            } else {
-                $items[] = $item['id'];
-            }
-        }
-
-        switch ($request->method()) {
-            case 'PATCH':
-                $record->{$relation}()->sync($items);
-                break;
-            case 'POST':
-                $record->{$relation}()->sync($items, false);
-                break;
-            case 'DELETE':
-                $record->{$relation}()->detach(array_keys($items));
+        if ($relationType === 'To-One') {
+            $this->updateToOneResourceRelationship($record, $relation, $request->input('data'));
+        } else if ($relationType === 'To-Many') {
+            $this->updateToManyResourceRelationship($record, $relation, $request->input('data'), $request->method());
         }
 
         return new JsonApiResponse(new RelationshipSerializer($record, $relation));
