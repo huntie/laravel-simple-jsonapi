@@ -101,4 +101,14 @@ abstract class JsonApiRequest extends FormRequest
     {
         return new JsonApiResponse($errors, Response::HTTP_UNPROCESSABLE_ENTITY);
     }
+
+    /**
+     * Return an input field containing comma separated values as an array.
+     *
+     * @param string $key
+     */
+    public function inputSet(string $key): array
+    {
+        return preg_split('/,/', $this->input($key), null, PREG_SPLIT_NO_EMPTY);
+    }
 }
