@@ -7,7 +7,12 @@ use Illuminate\Http\Request;
 /**
  * Add default resource controller methods for JsonApiController actions.
  *
- * @return JsonApiController
+ * @method indexAction($request)
+ * @method storeAction($request)
+ * @method showAction($request, $id)
+ * @method updateAction($request, $id)
+ * @method destroyAction($request, $id)
+ * @method showRelationshipAction($request, $id, $relation)
  */
 trait JsonApiControllerActions
 {
