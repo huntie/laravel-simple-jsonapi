@@ -132,7 +132,7 @@ abstract class JsonApiController extends Controller
         $record->save();
 
         if ($relationships = $request->input('data.relationships')) {
-            $this->updateRecordRelationships($record, (array) $relationships);
+            $this->updateResourceRelationships($record, (array) $relationships);
         }
 
         return new JsonApiResponse(new ResourceSerializer($record));
@@ -185,15 +185,16 @@ abstract class JsonApiController extends Controller
      */
     public function updateRelationshipAction(Request $request, $record, $relation)
     {
-        $record = $this->findModelInstance($record);
         $relationType = $this->getRelationType($relation);
-
         abort_unless(is_string($relationType) && $this->isFillableRelation($relation), Response::HTTP_NOT_FOUND);
 
+        $record = $this->findModelInstance($record);
+        $data = (array) $request->input('data');
+
         if ($relationType === 'To-One') {
-            $this->updateToOneResourceRelationship($record, $relation, $request->input('data'));
+            $this->updateToOneResourceRelationship($record, $relation, $data);
         } else if ($relationType === 'To-Many') {
-            $this->updateToManyResourceRelationship($record, $relation, $request->input('data'), $request->method());
+            $this->updateToManyResourceRelationship($record, $relation, $data, $request->method());
         }
 
         return new JsonApiResponse(new RelationshipSerializer($record, $relation));

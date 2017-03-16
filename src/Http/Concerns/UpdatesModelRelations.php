@@ -5,6 +5,11 @@ namespace Huntie\JsonApi\Http\Concerns;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
+/**
+ * Specify and update relationships on the primary controller resource.
+ *
+ * @property $model
+ */
 trait UpdatesModelRelations
 {
     /**
@@ -34,7 +39,7 @@ trait UpdatesModelRelations
      */
     protected function getRelationType(string $relation)
     {
-        $relation = $this->model->{$name}();
+        $relation = $this->model->{$relation}();
 
         if ($relation instanceof BelongsTo) {
             return 'To-One';
@@ -106,7 +111,7 @@ trait UpdatesModelRelations
         $relationships = array_intersect_key($relationships, array_flip($this->fillableRelations));
 
         foreach ($relationships as $name => $relationship) {
-            if ($this->getRelationType($relation) === 'To-One') {
+            if ($this->getRelationType($name) === 'To-One') {
                 $record->{$name}()->associate(array_get($relationship, 'data.id'));
                 $record->save();
             } else if ($this->getRelationType($relation) === 'To-Many') {
