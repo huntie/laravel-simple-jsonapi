@@ -16,25 +16,16 @@ abstract class JsonApiSerializer implements JsonSerializable
     /**
      * Meta information to include.
      *
-     * @var \Illuminate\Support\Collection
+     * @var array
      */
-    protected $meta;
+    protected $meta = [];
 
     /**
      * Resource links to include.
      *
-     * @var \Illuminate\Support\Collection
+     * @var array
      */
-    protected $links;
-
-    /**
-     * Create a new JSON API document serializer.
-     */
-    public function __construct()
-    {
-        $this->meta = collect([]);
-        $this->links = collect([]);
-    }
+    protected $links = [];
 
     /**
      * Return primary data for the JSON API document.
@@ -51,7 +42,7 @@ abstract class JsonApiSerializer implements JsonSerializable
      */
     public function addMeta($key, $value = null)
     {
-        $this->meta = $this->meta->merge(is_array($key) ? $key : [$key => $value]);
+        $this->meta = array_merge($this->meta, is_array($key) ? $key : [$key => $value]);
     }
 
     /**
@@ -62,7 +53,7 @@ abstract class JsonApiSerializer implements JsonSerializable
      */
     public function addLinks($key, $value = null)
     {
-        $this->links = $this->links->merge(is_array($key) ? $key : [$key => $value]);
+        $this->links = array_merge($this->links, is_array($key) ? $key : [$key => $value]);
     }
 
     /**
@@ -74,8 +65,8 @@ abstract class JsonApiSerializer implements JsonSerializable
     {
         return array_filter([
             'data' => $this->getPrimaryData(),
-            'links' => $this->links->toArray(),
-            'meta' => $this->meta->toArray(),
+            'links' => $this->links,
+            'meta' => $this->meta,
             'included' => array_filter($this->getIncludedData()),
             'jsonapi' => $this->getDocumentMeta(),
         ]);
