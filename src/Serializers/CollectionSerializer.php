@@ -63,21 +63,6 @@ class CollectionSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return a collection of JSON API resource objects for each included
-     * relationship.
-     *
-     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
-     *
-     * @return \Illuminate\Support\Collection
-     */
-    public function getIncludedRecords()
-    {
-        return $this->records->map(function ($record) {
-            return (new ResourceSerializer($record, $this->fields, $this->include))->getIncludedRecords();
-        })->flatten(1)->unique()->values();
-    }
-
-    /**
      * Return primary data for the JSON API document.
      *
      * @return mixed
@@ -88,13 +73,24 @@ class CollectionSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return any secondary included resource data.
+     * Return any secondary included resource objects.
      *
-     * @return array
+     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     *
+     * @return \Illuminate\Support\Collection
      */
-    protected function getIncludedData()
+    public function getIncluded()
     {
-        return $this->getIncludedRecords()->toArray();
+        $included = collect();
+
+        foreach ($this->records as $record) {
+            $included = $included->merge(
+                (new ResourceSerializer($record, $this->fields, $this->include))
+                    ->getIncluded()
+            );
+        }
+
+        return $included->unique();
     }
 
     /**

@@ -35,6 +35,16 @@ abstract class JsonApiSerializer implements JsonSerializable
     abstract protected function getPrimaryData();
 
     /**
+     * Return any secondary included resource objects.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getIncluded()
+    {
+        return collect();
+    }
+
+    /**
      * Add included meta information.
      *
      * @param string|array    $key
@@ -58,56 +68,38 @@ abstract class JsonApiSerializer implements JsonSerializable
 
     /**
      * Serialise JSON API document to an array.
-     *
-     * @return array
      */
-    public function serializeToObject()
+    public function serializeToObject(): array
     {
         return array_filter([
             'data' => $this->getPrimaryData(),
             'links' => $this->links,
             'meta' => $this->meta,
-            'included' => array_filter($this->getIncludedData()),
+            'included' => $this->getIncluded()->toArray(),
             'jsonapi' => $this->getDocumentMeta(),
         ]);
     }
 
     /**
      * Convert the object into something JSON serializable.
-     *
-     * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->serializeToObject();
     }
 
     /**
      * Serialise JSON API document to a JSON string.
-     *
-     * @return array
      */
-    public function serializeToJson()
+    public function serializeToJson(): string
     {
         return json_encode($this->jsonSerialize());
     }
 
     /**
-     * Return any secondary included resource data.
-     *
-     * @return array
-     */
-    protected function getIncludedData()
-    {
-        return [];
-    }
-
-    /**
      * Return JSON API implementation information.
-     *
-     * @return array
      */
-    private function getDocumentMeta()
+    private function getDocumentMeta(): array
     {
         return array_filter([
             'version' => config('jsonapi.include_version') ? self::JSON_API_VERSION : null,
