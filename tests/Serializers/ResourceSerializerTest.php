@@ -97,7 +97,7 @@ class ResourceSerializerTest extends TestCase
         $user->comments = factory(Comment::class, 2)->make();
 
         $serializer = new ResourceSerializer($user, [], ['posts', 'comments']);
-        $included = $serializer->getIncludedRecords();
+        $included = $serializer->getIncluded();
 
         $this->assertInstanceOf(Collection::class, $included);
         $this->assertJsonApiObjectCollection(['data' => $included->toArray()], 4);
@@ -118,7 +118,7 @@ class ResourceSerializerTest extends TestCase
 
         $serializer = new ResourceSerializer($user, [], ['posts', 'comments']);
         $serializer->scopeIncludes(['posts']);
-        $included = $serializer->getIncludedRecords();
+        $included = $serializer->getIncluded();
 
         $this->assertInstanceOf(Collection::class, $included);
         $this->assertCount(2, $included->toArray());

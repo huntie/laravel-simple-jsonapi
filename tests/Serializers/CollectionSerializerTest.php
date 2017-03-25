@@ -62,7 +62,7 @@ class CollectionSerializerTest extends TestCase
             });
 
         $serializer = new CollectionSerializer($users, [], ['posts']);
-        $included = $serializer->getIncludedRecords();
+        $included = $serializer->getIncluded();
 
         $this->assertInstanceOf(Collection::class, $included);
         $this->assertJsonApiObjectCollection(['data' => $included->toArray()], 6);
