@@ -3,6 +3,7 @@
 namespace Huntie\JsonApi\Serializers;
 
 use JsonSerializable;
+use Request;
 
 abstract class JsonApiSerializer implements JsonSerializable
 {
@@ -14,6 +15,13 @@ abstract class JsonApiSerializer implements JsonSerializable
     const JSON_API_VERSION = '1.0';
 
     /**
+     * The base URL for links.
+     *
+     * @var string
+     */
+    protected $baseUrl;
+
+    /**
      * Meta information to include.
      *
      * @var array
@@ -21,11 +29,20 @@ abstract class JsonApiSerializer implements JsonSerializable
     protected $meta = [];
 
     /**
-     * Resource links to include.
+     * Resource links to include, relative to the base URL.
      *
      * @var array
      */
     protected $links = [];
+
+    /**
+     * Create a new JSON API document serializer.
+     */
+    public function __construct()
+    {
+        $this->baseUrl = Request::url();
+        $this->addLinks('self', str_replace(Request::url(), '', Request::fullUrl()));
+    }
 
     /**
      * Return primary data for the JSON API document.
@@ -35,6 +52,16 @@ abstract class JsonApiSerializer implements JsonSerializable
     abstract protected function getPrimaryData();
 
     /**
+     * Return any links related to the primary data.
+     */
+    public function getLinks(): array
+    {
+        return array_map(function ($path) {
+            return $this->baseUrl . $path;
+        }, $this->links);
+    }
+
+    /**
      * Return any secondary included resource objects.
      *
      * @return \Illuminate\Support\Collection
@@ -42,6 +69,16 @@ abstract class JsonApiSerializer implements JsonSerializable
     public function getIncluded()
     {
         return collect();
+    }
+
+    /**
+     * Set the base URL for document links.
+     *
+     * @param string $url
+     */
+    public function setBaseUrl(string $url)
+    {
+        $this->baseUrl = preg_replace('/\/$/', '', $url);
     }
 
     /**
@@ -73,7 +110,7 @@ abstract class JsonApiSerializer implements JsonSerializable
     {
         return array_filter([
             'data' => $this->getPrimaryData(),
-            'links' => $this->links,
+            'links' => $this->getLinks(),
             'meta' => $this->meta,
             'included' => $this->getIncluded()->toArray(),
             'jsonapi' => $this->getDocumentMeta(),
