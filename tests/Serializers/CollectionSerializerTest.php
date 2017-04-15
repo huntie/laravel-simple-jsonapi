@@ -28,19 +28,19 @@ class CollectionSerializerTest extends TestCase
         $pageSize = 5;
         $users = factory(User::class, 12)->make();
         $paginator = new LengthAwarePaginator($users->forPage(1, $pageSize), $users->count(), $pageSize);
-        $paginator->setPath('http://localhost/users');
 
         $serializer = new CollectionSerializer($paginator);
+        $serializer->setBaseUrl('http://localhost/users');
         $document = $serializer->serializeToObject();
 
         $this->assertCount(5, $document['data'], 'Incorrect number of paginated records returned');
 
         $this->assertArrayHasKey('links', $document);
         $this->assertEquals([
-            'first' => 'http://localhost/users?page=1',
-            'last' => 'http://localhost/users?page=3',
-            'prev' => null,
-            'next' => 'http://localhost/users?page=2',
+            'first' => 'http://localhost/users?page[size]=5&page[number]=1',
+            'last' => 'http://localhost/users?page[size]=5&page[number]=3',
+            'next' => 'http://localhost/users?page[size]=5&page[number]=2',
+            'self' => 'http://localhost/users'
         ], $document['links']);
 
         $this->assertArrayHasKey('meta', $document);

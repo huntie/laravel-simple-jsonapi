@@ -2,6 +2,7 @@
 
 namespace Huntie\JsonApi\Serializers;
 
+use Request;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CollectionSerializer extends JsonApiSerializer
@@ -100,12 +101,16 @@ class CollectionSerializer extends JsonApiSerializer
      */
     protected function addPaginationLinks($paginator)
     {
-        $this->addLinks([
-            'first' => $paginator->url(1),
-            'last' => $paginator->url($paginator->lastPage()),
-            'prev' => $paginator->previousPageUrl(),
-            'next' => $paginator->nextPageUrl(),
-        ]);
+        $query = array_add(Request::query(), 'page.size', $paginator->perPage());
+
+        $this->addLinks(array_map(function ($page) use ($query) {
+            return '?' . urldecode(http_build_query(array_add($query, 'page.number', $page)));
+        }, array_filter([
+            'first' => 1,
+            'last' => $paginator->lastPage(),
+            'prev' => $paginator->currentPage() > 1 ? $paginator->currentPage() - 1 : null,
+            'next' => $paginator->currentPage() < $paginator->lastPage() ? $paginator->currentPage() + 1 : null,
+        ])));
 
         $this->addMeta('total', $paginator->total());
     }
