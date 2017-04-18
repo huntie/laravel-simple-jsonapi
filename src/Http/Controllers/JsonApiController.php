@@ -67,14 +67,12 @@ abstract class JsonApiController extends Controller
         $params = $this->getRequestParameters($request);
         $this->validateIncludableRelations($params['include']);
 
-        $records = $this->sortQuery($records, $params['sort']);
-        $records = $this->filterQuery($records, $params['filter']);
-
         try {
-            $pageSize = min($this->model->getPerPage(), $request->input('page.size'));
-            $pageNumber = $request->input('page.number') ?: 1;
+            $records = $this->sortQuery($records, $params['sort']);
+            $records = $this->filterQuery($records, $params['filter']);
+            $page = $this->resolvePaginationParameters($request);
 
-            $records = $records->paginate($pageSize, null, 'page', $pageNumber);
+            $records = $records->paginate($page['size'], null, null, $page['number']);
         } catch (QueryException $e) {
             return $this->error(Response::HTTP_BAD_REQUEST, 'Invalid query parameters');
         }
@@ -293,5 +291,18 @@ abstract class JsonApiController extends Controller
                 throw new InvalidRelationPathException($relation);
             }
         }
+    }
+
+    /**
+     * Return the page number and page size to use for paginated results.
+     *
+     * @param \Illuminate\Http\Request $request
+     */
+    protected function resolvePaginationParameters($request): array
+    {
+        return [
+            'number' => $request->input('page.number', $request->input('page.offset', 0) / 10 + 1),
+            'size' => $request->input('page.size', $request->input('page.limit', $this->model->getPerPage())),
+        ];
     }
 }
