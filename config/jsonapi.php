@@ -46,4 +46,18 @@ return [
 
     'enable_included_resources' => true,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Pagination method
+    |--------------------------------------------------------------------------
+    |
+    | Set the pagination strategy used when returning resource collections.
+    | Supported values are 'page-based' and 'offset-based'.
+    |
+    | http://jsonapi.org/format/#fetching-pagination
+    |
+    */
+
+    'pagination_method' => 'page-based',
+
 ];
