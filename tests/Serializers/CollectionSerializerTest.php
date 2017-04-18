@@ -42,9 +42,6 @@ class CollectionSerializerTest extends TestCase
             'next' => 'http://localhost/users?page[size]=5&page[number]=2',
             'self' => 'http://localhost/users'
         ], $document['links']);
-
-        $this->assertArrayHasKey('meta', $document);
-        $this->assertEquals(12, $document['meta']['total']);
     }
 
     /**

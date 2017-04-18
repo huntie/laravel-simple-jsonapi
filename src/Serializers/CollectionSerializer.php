@@ -111,7 +111,5 @@ class CollectionSerializer extends JsonApiSerializer
             'prev' => $paginator->currentPage() > 1 ? $paginator->currentPage() - 1 : null,
             'next' => $paginator->currentPage() < $paginator->lastPage() ? $paginator->currentPage() + 1 : null,
         ])));
-
-        $this->addMeta('total', $paginator->total());
     }
 }
