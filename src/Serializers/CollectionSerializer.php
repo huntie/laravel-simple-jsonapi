@@ -101,15 +101,35 @@ class CollectionSerializer extends JsonApiSerializer
      */
     protected function addPaginationLinks($paginator)
     {
-        $query = array_add(Request::query(), 'page.size', $paginator->perPage());
-
-        $this->addLinks(array_map(function ($page) use ($query) {
-            return '?' . urldecode(http_build_query(array_add($query, 'page.number', $page)));
+        $this->addLinks(array_map(function ($page) use ($paginator) {
+            return $this->formatPaginationQueryString(Request::query(), $page, $paginator->perPage());
         }, array_filter([
             'first' => 1,
             'last' => $paginator->lastPage(),
             'prev' => $paginator->currentPage() > 1 ? $paginator->currentPage() - 1 : null,
             'next' => $paginator->currentPage() < $paginator->lastPage() ? $paginator->currentPage() + 1 : null,
         ])));
+    }
+
+    /**
+     * Add JSON API pagination parameters to request query set based on
+     * selected pagination strategy, and return the built URL query string.
+     *
+     * @param array $query
+     * @param int   $number
+     * @param int   $size
+     */
+    protected function formatPaginationQueryString(array $query = [], int $number, int $size): string
+    {
+        if (config('jsonapi.pagination_method') === 'offset-based') {
+            $query['page'] = [
+                'offset' => ($number - 1) * $size,
+                'limit' => $size,
+            ];
+        }
+
+        $query['page'] = compact('number', 'size');
+
+        return '?' . urldecode(http_build_query($query));
     }
 }

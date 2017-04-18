@@ -37,9 +37,9 @@ class CollectionSerializerTest extends TestCase
 
         $this->assertArrayHasKey('links', $document);
         $this->assertEquals([
-            'first' => 'http://localhost/users?page[size]=5&page[number]=1',
-            'last' => 'http://localhost/users?page[size]=5&page[number]=3',
-            'next' => 'http://localhost/users?page[size]=5&page[number]=2',
+            'first' => 'http://localhost/users?page[number]=1&page[size]=5',
+            'last' => 'http://localhost/users?page[number]=3&page[size]=5',
+            'next' => 'http://localhost/users?page[number]=2&page[size]=5',
             'self' => 'http://localhost/users'
         ], $document['links']);
     }
