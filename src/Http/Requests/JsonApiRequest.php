@@ -24,6 +24,8 @@ abstract class JsonApiRequest extends FormRequest
         'page' => 'array',
         'page.size' => 'integer',
         'page.number' => 'integer',
+        'page.offset' => 'integer',
+        'page.limit' => 'integer',
     ];
 
     /**
