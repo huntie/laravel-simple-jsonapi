@@ -62,16 +62,19 @@ class JsonApiSerializerTest extends TestCase
     public function testAddLinks()
     {
         $serializer = new ResourceSerializer(factory(User::class)->make());
+        $serializer->setBaseUrl('http://localhost/users'); // TODO path joining logic
         $serializer->addLinks([
-            'next' => 'http://localhost/users/3',
-            'prev' => 'http://localhost/users/1',
+            'next' => '?page[number]=2',
+            'posts' => '/posts',
         ]);
         $document = $serializer->serializeToObject();
 
         $this->assertArrayHasKey('links', $document);
-        $this->assertCount(2, $document['links']);
-        $this->assertEquals('http://localhost/users/3', $document['links']['next']);
-        $this->assertEquals('http://localhost/users/1', $document['links']['prev']);
+        $this->assertEquals([
+            'self' => 'http://localhost/users',
+            'next' => 'http://localhost/users?page[number]=2',
+            'posts' => 'http://localhost/users/posts'
+        ], $document['links']);
     }
 
     /**

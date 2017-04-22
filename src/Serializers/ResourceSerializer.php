@@ -100,23 +100,6 @@ class ResourceSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return a collection of JSON API resource objects for each included
-     * relationship.
-     *
-     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
-     *
-     * @return \Illuminate\Support\Collection
-     */
-    public function getIncludedRecords()
-    {
-        return collect($this->include)->map(function ($relation) {
-            $records = (new RelationshipSerializer($this->record, $relation, $this->fields))->toResourceCollection();
-
-            return $records instanceof Collection ? $records : [$records];
-        })->flatten(1)->unique()->values();
-    }
-
-    /**
      * Return primary data for the JSON API document.
      *
      * @return mixed
@@ -127,13 +110,28 @@ class ResourceSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return any secondary included resource data.
+     * Return any secondary included resource objects.
      *
-     * @return array
+     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     *
+     * @return \Illuminate\Support\Collection
      */
-    protected function getIncludedData()
+    public function getIncluded()
     {
-        return $this->getIncludedRecords()->toArray();
+        $included = collect();
+
+        foreach ($this->include as $relation) {
+            $records = (new RelationshipSerializer($this->record, $relation, $this->fields))
+                ->toResourceCollection();
+
+            if ($records instanceof Collection) {
+                $included = $included->merge($records);
+            } else if (!empty($records)) {
+                $included->push($records);
+            }
+        }
+
+        return $included->unique();
     }
 
     /**

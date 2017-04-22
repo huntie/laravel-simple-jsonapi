@@ -3,6 +3,7 @@
 namespace Huntie\JsonApi\Serializers;
 
 use JsonSerializable;
+use Request;
 
 abstract class JsonApiSerializer implements JsonSerializable
 {
@@ -14,26 +15,33 @@ abstract class JsonApiSerializer implements JsonSerializable
     const JSON_API_VERSION = '1.0';
 
     /**
-     * Meta information to include.
+     * The base URL for links.
      *
-     * @var \Illuminate\Support\Collection
+     * @var string
      */
-    protected $meta;
+    protected $baseUrl;
 
     /**
-     * Resource links to include.
+     * Meta information to include.
      *
-     * @var \Illuminate\Support\Collection
+     * @var array
      */
-    protected $links;
+    protected $meta = [];
+
+    /**
+     * Resource links to include, relative to the base URL.
+     *
+     * @var array
+     */
+    protected $links = [];
 
     /**
      * Create a new JSON API document serializer.
      */
     public function __construct()
     {
-        $this->meta = collect([]);
-        $this->links = collect([]);
+        $this->baseUrl = Request::url();
+        $this->addLinks('self', str_replace(Request::url(), '', Request::fullUrl()));
     }
 
     /**
@@ -44,6 +52,36 @@ abstract class JsonApiSerializer implements JsonSerializable
     abstract protected function getPrimaryData();
 
     /**
+     * Return any links related to the primary data.
+     */
+    public function getLinks(): array
+    {
+        return array_map(function ($path) {
+            return $this->baseUrl . $path;
+        }, $this->links);
+    }
+
+    /**
+     * Return any secondary included resource objects.
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    public function getIncluded()
+    {
+        return collect();
+    }
+
+    /**
+     * Set the base URL for document links.
+     *
+     * @param string $url
+     */
+    public function setBaseUrl(string $url)
+    {
+        $this->baseUrl = preg_replace('/\/$/', '', $url);
+    }
+
+    /**
      * Add included meta information.
      *
      * @param string|array    $key
@@ -51,7 +89,7 @@ abstract class JsonApiSerializer implements JsonSerializable
      */
     public function addMeta($key, $value = null)
     {
-        $this->meta = $this->meta->merge(is_array($key) ? $key : [$key => $value]);
+        $this->meta = array_merge($this->meta, is_array($key) ? $key : [$key => $value]);
     }
 
     /**
@@ -62,61 +100,43 @@ abstract class JsonApiSerializer implements JsonSerializable
      */
     public function addLinks($key, $value = null)
     {
-        $this->links = $this->links->merge(is_array($key) ? $key : [$key => $value]);
+        $this->links = array_merge($this->links, is_array($key) ? $key : [$key => $value]);
     }
 
     /**
      * Serialise JSON API document to an array.
-     *
-     * @return array
      */
-    public function serializeToObject()
+    public function serializeToObject(): array
     {
         return array_filter([
             'data' => $this->getPrimaryData(),
-            'links' => $this->links->toArray(),
-            'meta' => $this->meta->toArray(),
-            'included' => array_filter($this->getIncludedData()),
+            'links' => $this->getLinks(),
+            'meta' => $this->meta,
+            'included' => $this->getIncluded()->toArray(),
             'jsonapi' => $this->getDocumentMeta(),
         ]);
     }
 
     /**
      * Convert the object into something JSON serializable.
-     *
-     * @return array
      */
-    public function jsonSerialize()
+    public function jsonSerialize(): array
     {
         return $this->serializeToObject();
     }
 
     /**
      * Serialise JSON API document to a JSON string.
-     *
-     * @return array
      */
-    public function serializeToJson()
+    public function serializeToJson(): string
     {
         return json_encode($this->jsonSerialize());
     }
 
     /**
-     * Return any secondary included resource data.
-     *
-     * @return array
-     */
-    protected function getIncludedData()
-    {
-        return [];
-    }
-
-    /**
      * Return JSON API implementation information.
-     *
-     * @return array
      */
-    private function getDocumentMeta()
+    private function getDocumentMeta(): array
     {
         return array_filter([
             'version' => config('jsonapi.include_version') ? self::JSON_API_VERSION : null,

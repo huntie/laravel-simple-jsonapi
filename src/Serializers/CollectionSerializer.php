@@ -2,6 +2,7 @@
 
 namespace Huntie\JsonApi\Serializers;
 
+use Request;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 class CollectionSerializer extends JsonApiSerializer
@@ -63,21 +64,6 @@ class CollectionSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return a collection of JSON API resource objects for each included
-     * relationship.
-     *
-     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
-     *
-     * @return \Illuminate\Support\Collection
-     */
-    public function getIncludedRecords()
-    {
-        return $this->records->map(function ($record) {
-            return (new ResourceSerializer($record, $this->fields, $this->include))->getIncludedRecords();
-        })->flatten(1)->unique()->values();
-    }
-
-    /**
      * Return primary data for the JSON API document.
      *
      * @return mixed
@@ -88,13 +74,24 @@ class CollectionSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return any secondary included resource data.
+     * Return any secondary included resource objects.
      *
-     * @return array
+     * @throws \Huntie\JsonApi\Exceptions\InvalidRelationPathException
+     *
+     * @return \Illuminate\Support\Collection
      */
-    protected function getIncludedData()
+    public function getIncluded()
     {
-        return $this->getIncludedRecords()->toArray();
+        $included = collect();
+
+        foreach ($this->records as $record) {
+            $included = $included->merge(
+                (new ResourceSerializer($record, $this->fields, $this->include))
+                    ->getIncluded()
+            );
+        }
+
+        return $included->unique();
     }
 
     /**
@@ -104,12 +101,16 @@ class CollectionSerializer extends JsonApiSerializer
      */
     protected function addPaginationLinks($paginator)
     {
-        $this->addLinks([
-            'first' => $paginator->url(1),
-            'last' => $paginator->url($paginator->lastPage()),
-            'prev' => $paginator->previousPageUrl(),
-            'next' => $paginator->nextPageUrl(),
-        ]);
+        $query = array_add(Request::query(), 'page.size', $paginator->perPage());
+
+        $this->addLinks(array_map(function ($page) use ($query) {
+            return '?' . urldecode(http_build_query(array_add($query, 'page.number', $page)));
+        }, array_filter([
+            'first' => 1,
+            'last' => $paginator->lastPage(),
+            'prev' => $paginator->currentPage() > 1 ? $paginator->currentPage() - 1 : null,
+            'next' => $paginator->currentPage() < $paginator->lastPage() ? $paginator->currentPage() + 1 : null,
+        ])));
 
         $this->addMeta('total', $paginator->total());
     }
