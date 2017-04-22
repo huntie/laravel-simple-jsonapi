@@ -13,15 +13,3 @@ $factory->define(Post::class, function (Generator $faker) {
         'created_at' => $faker->dateTime(),
     ];
 });
-
-$factory->state(Post::class, 'withAuthor', function (Generator $faker) {
-    return [
-        'author' => factory(User::class)->make(),
-    ];
-});
-
-$factory->state(Post::class, 'withComments', function (Generator $faker) {
-    return [
-        'comments' => factory(Comment::class, 2)->make(),
-    ];
-});

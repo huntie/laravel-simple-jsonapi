@@ -13,15 +13,3 @@ $factory->define(User::class, function (Generator $faker) {
         'password' => bcrypt('password'),
     ];
 });
-
-$factory->state(User::class, 'withPosts', function (Generator $faker) {
-    return [
-        'posts' => factory(Post::class, 2)->make(),
-    ];
-});
-
-$factory->state(User::class, 'withComments', function (Generator $faker) {
-    return [
-        'comments' => factory(Comment::class, 2)->make(),
-    ];
-});
