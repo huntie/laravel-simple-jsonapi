@@ -2,6 +2,8 @@
 
 namespace Huntie\JsonApi;
 
+use Huntie\JsonApi\Routing\ResourceRegistrar;
+use Huntie\JsonApi\Routing\Router;
 use Illuminate\Support\ServiceProvider;
 
 class JsonApiServiceProvider extends ServiceProvider
@@ -11,7 +13,13 @@ class JsonApiServiceProvider extends ServiceProvider
      */
     public function register()
     {
-        //
+        $this->app->singleton('router', function ($app) {
+            return new Router($app['events'], $app);
+        });
+
+        $this->app->bind('Huntie\JsonApi\Routing\ResourceRegistrar', function ($app) {
+            return new ResourceRegistrar($app['router']);
+        });
     }
 
     /**
