@@ -85,6 +85,8 @@ trait JsonApiAssertions
             $this->assertArrayHasAll(['type', 'id', 'attributes'], (array) $object);
         }
 
-        $this->assertCount($count, $array['data'], 'Incorrect object count returned in collection');
+        if (!is_null($count)) {
+            $this->assertCount($count, $array['data'], 'Incorrect object count returned in collection');
+        }
     }
 }

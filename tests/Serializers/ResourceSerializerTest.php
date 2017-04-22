@@ -4,6 +4,7 @@ namespace Tests\Serializers;
 
 use Huntie\JsonApi\Serializers\ResourceSerializer;
 use Tests\TestCase;
+use Tests\Fixtures\Models\Comment;
 use Tests\Fixtures\Models\Post;
 use Tests\Fixtures\Models\User;
 use Illuminate\Support\Collection;
@@ -71,9 +72,10 @@ class ResourceSerializerTest extends TestCase
      */
     public function testResourceRelationships()
     {
-        $post = factory(Post::class)
-            ->states('withAuthor', 'withComments')
-            ->make();
+        $post = factory(Post::class)->make();
+        $post->author = factory(User::class)->make();
+        $post->comments = factory(Comment::class, 2)->make();
+
         $serializer = new ResourceSerializer($post, [],  ['author', 'comments']);
         $resource = $serializer->toResourceObject();
 
@@ -90,9 +92,10 @@ class ResourceSerializerTest extends TestCase
      */
     public function testIncludedRecords()
     {
-        $user = factory(User::class)
-            ->states('withPosts', 'withComments')
-            ->make();
+        $user = factory(User::class)->make();
+        $user->posts = factory(Post::class, 2)->make();
+        $user->comments = factory(Comment::class, 2)->make();
+
         $serializer = new ResourceSerializer($user, [], ['posts', 'comments']);
         $included = $serializer->getIncluded();
 
@@ -109,9 +112,10 @@ class ResourceSerializerTest extends TestCase
      */
     public function testScopeIncludedRecords()
     {
-        $user = factory(User::class)
-            ->states('withPosts', 'withComments')
-            ->make();
+        $user = factory(User::class)->make();
+        $user->posts = factory(Post::class, 2)->make();
+        $user->comments = factory(Comment::class, 2)->make();
+
         $serializer = new ResourceSerializer($user, [], ['posts', 'comments']);
         $serializer->scopeIncludes(['posts']);
         $included = $serializer->getIncluded();
