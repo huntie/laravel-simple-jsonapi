@@ -5,6 +5,18 @@ namespace Huntie\JsonApi\Routing;
 class Router extends \Illuminate\Routing\Router
 {
     /**
+     * Register an array of JSON API resource controllers.
+     *
+     * @param array $resources
+     */
+    public function jsonApiResources(array $resources)
+    {
+        foreach ($resources as $name => $controller) {
+            $this->resource($name, $controller);
+        }
+    }
+
+    /**
      * Route a JSON API resource to a controller.
      *
      * @param string $name
