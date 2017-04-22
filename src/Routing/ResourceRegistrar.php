@@ -124,4 +124,26 @@ class ResourceRegistrar extends \Illuminate\Routing\ResourceRegistrar
     {
         return sprintf('%s/{%s}/relationships/{relationship}', $this->getResourceUri($name), $base);
     }
+
+    /**
+     * Format a resource parameter for usage.
+     *
+     * @param string $value
+     *
+     * @return string
+     */
+    public function getResourceWildcard($value)
+    {
+        if (isset($this->parameters[$value])) {
+            return $this->parameters[$value];
+        } else if (isset(static::$parameterMap[$value])) {
+            return static::$parameterMap[$value];
+        }
+
+        if ($this->parameters === 'singular' || static::$singularParameters) {
+            $value = str_singular($value);
+        }
+
+        return camel_case($value);
+    }
 }
