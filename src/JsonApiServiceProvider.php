@@ -17,7 +17,7 @@ class JsonApiServiceProvider extends ServiceProvider
             return new Router($app['events'], $app);
         });
 
-        $this->app->bind('Illuminate\Routing\ResourceRegistrar', function ($app) {
+        $this->app->bind('Huntie\JsonApi\Routing\ResourceRegistrar', function ($app) {
             return new ResourceRegistrar($app['router']);
         });
     }
