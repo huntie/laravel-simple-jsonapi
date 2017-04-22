@@ -6,6 +6,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Huntie\JsonApi\Serializers\CollectionSerializer;
 use Tests\TestCase;
+use Tests\Fixtures\Models\Post;
 use Tests\Fixtures\Models\User;
 
 class CollectionSerializerTest extends TestCase
@@ -53,8 +54,13 @@ class CollectionSerializerTest extends TestCase
     public function testIncludedRecords()
     {
         $users = factory(User::class, 3)
-            ->states('withPosts')
-            ->make();
+            ->make()
+            ->map(function ($user) {
+                $user->posts = factory(Post::class, 2)->make();
+
+                return $user;
+            });
+
         $serializer = new CollectionSerializer($users, [], ['posts']);
         $included = $serializer->getIncludedRecords();
 

@@ -14,9 +14,9 @@ class RelationshipSerializerTest extends TestCase
      */
     public function testHasOneToResourceLinkage()
     {
-        $post = factory(Post::class)
-            ->states('withAuthor')
-            ->make();
+        $post = factory(Post::class)->make();
+        $post->author = factory(User::class)->make();
+
         $serializer = new RelationshipSerializer($post, 'author');
         $relationship = $serializer->toResourceLinkage();
 
@@ -32,9 +32,9 @@ class RelationshipSerializerTest extends TestCase
      */
     public function testHasManyToResourceLinkage()
     {
-        $user = factory(User::class)
-            ->states('withPosts')
-            ->make();
+        $user = factory(User::class)->make();
+        $user->posts = factory(Post::class, 2)->make();
+
         $serializer = new RelationshipSerializer($user, 'posts');
         $relationship = $serializer->toResourceLinkage();
 
@@ -50,9 +50,9 @@ class RelationshipSerializerTest extends TestCase
      */
     public function testHasOneToResourceCollection()
     {
-        $post = factory(Post::class)
-            ->states('withAuthor')
-            ->make();
+        $post = factory(Post::class)->make();
+        $post->author = factory(User::class)->make();
+
         $serializer = new RelationshipSerializer($post, 'author');
         $relationship = $serializer->toResourceCollection();
 
@@ -65,9 +65,9 @@ class RelationshipSerializerTest extends TestCase
      */
     public function testHasManyToResourceCollection()
     {
-        $user = factory(User::class)
-            ->states('withPosts')
-            ->make();
+        $user = factory(User::class)->make();
+        $user->posts = factory(Post::class, 2)->make();
+
         $serializer = new RelationshipSerializer($user, 'posts');
         $relationship = $serializer->toResourceCollection();
 
@@ -83,9 +83,9 @@ class RelationshipSerializerTest extends TestCase
      */
     public function testCollectionFieldSubset()
     {
-        $user = factory(User::class)
-            ->states('withPosts')
-            ->make();
+        $user = factory(User::class)->make();
+        $user->posts = factory(Post::class, 2)->make();
+
         $serializer = new RelationshipSerializer($user, 'posts', [
             'posts' => ['title', 'created_at']
         ]);
@@ -104,9 +104,7 @@ class RelationshipSerializerTest extends TestCase
      */
     public function testInvalidRelationPath()
     {
-        $user = factory(User::class)
-            ->states('withPosts')
-            ->make();
+        $user = factory(User::class)->make();
 
         $serializer = new RelationshipSerializer($user, 'nonexistent.relation');
         $serializer->toResourceLinkage();
