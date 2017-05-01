@@ -43,7 +43,7 @@ abstract class JsonApiController extends Controller
      */
     public function __construct()
     {
-        if (is_string($this->model)) {
+        if (is_null($this->model) || is_string($this->model)) {
             if (!is_subclass_of($this->model, Model::class)) {
                 $this->model = str_finish(config('jsonapi.model_namespace', app()->getNamespace()), '\\')
                     . preg_replace('/Controller$/', '', class_basename($this));
