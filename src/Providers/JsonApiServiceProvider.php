@@ -1,6 +1,6 @@
 <?php
 
-namespace Huntie\JsonApi;
+namespace Huntie\JsonApi\Providers;
 
 use Illuminate\Support\ServiceProvider;
 
