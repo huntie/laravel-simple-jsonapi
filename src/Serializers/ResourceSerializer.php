@@ -141,7 +141,11 @@ class ResourceSerializer extends JsonApiSerializer
     {
         $modelName = collect(explode('\\', get_class($this->record)))->last();
 
-        return snake_case(str_plural($modelName), '-');
+        if (config('jsonapi.singular_type_names') !== true) {
+            $modelName = str_plural($modelName);
+        }
+
+        return snake_case($modelName, '-');
     }
 
     /**
