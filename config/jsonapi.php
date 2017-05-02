@@ -18,6 +18,21 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Singular resource type names
+    |--------------------------------------------------------------------------
+    |
+    | Set whether to use singular naming when resolving a JSON API resource
+    | type identifier from a model name. By default, these are plural to align
+    | with plural resource URIs.
+    |
+    | http://jsonapi.org/format/#document-resource-object-identification
+    |
+    */
+
+    'singular_type_names' => false,
+
+    /*
+    |--------------------------------------------------------------------------
     | Include JSON API version
     |--------------------------------------------------------------------------
     |

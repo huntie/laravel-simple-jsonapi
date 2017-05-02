@@ -136,14 +136,16 @@ class ResourceSerializer extends JsonApiSerializer
 
     /**
      * Return the primary resource type name.
-     *
-     * @return string
      */
-    protected function getResourceType()
+    protected function getResourceType(): string
     {
         $modelName = collect(explode('\\', get_class($this->record)))->last();
 
-        return snake_case(str_plural($modelName), '-');
+        if (config('jsonapi.singular_type_names') !== true) {
+            $modelName = str_plural($modelName);
+        }
+
+        return snake_case($modelName, '-');
     }
 
     /**
@@ -159,15 +161,23 @@ class ResourceSerializer extends JsonApiSerializer
     }
 
     /**
-     * Return the attribute object data for the primary record.
-     *
-     * @return array
+     * Return the attribute subset requested for the primary resource type.
      */
-    protected function transformRecordAttributes()
+    protected function getRequestedFields(): array
+    {
+        $fields = array_get($this->fields, $this->getResourceType());
+
+        return is_array($fields) ? $fields : preg_split('/,/', $fields, null, PREG_SPLIT_NO_EMPTY);
+    }
+
+    /**
+     * Return the attribute object data for the primary record.
+     */
+    protected function transformRecordAttributes(): array
     {
         $attributes = array_diff_key($this->record->toArray(), $this->record->getRelations());
         $attributes = array_except($attributes, ['id']);
-        $fields = array_get($this->fields, $this->getResourceType());
+        $fields = $this->getRequestedFields();
 
         if (!empty($fields)) {
             $attributes = array_only($attributes, $fields);

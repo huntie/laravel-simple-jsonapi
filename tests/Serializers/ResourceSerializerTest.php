@@ -59,7 +59,7 @@ class ResourceSerializerTest extends TestCase
     public function testFieldSubset()
     {
         $user = factory(User::class)->make();
-        $serializer = new ResourceSerializer($user, ['users' => ['name']]);
+        $serializer = new ResourceSerializer($user, ['users' => 'name']);
         $resource = $serializer->toBaseResourceObject();
 
         $this->assertArrayHasKey('name', $resource['attributes']);
