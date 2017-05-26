@@ -41,7 +41,7 @@ abstract class JsonApiSerializer implements JsonSerializable
     public function __construct()
     {
         $this->baseUrl = Request::url();
-        $this->addLinks('self', str_replace(Request::url(), '', Request::fullUrl()));
+        $this->addLinks('self', urldecode(str_replace(Request::url(), '', Request::fullUrl())));
     }
 
     /**
