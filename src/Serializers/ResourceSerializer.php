@@ -175,8 +175,7 @@ class ResourceSerializer extends JsonApiSerializer
      */
     protected function transformRecordAttributes(): array
     {
-        $attributes = array_diff_key($this->record->toArray(), $this->record->getRelations());
-        $attributes = array_except($attributes, ['id']);
+        $attributes = array_except($this->record->attributesToArray(), ['id']);
         $fields = $this->getRequestedFields();
 
         if (!empty($fields)) {
