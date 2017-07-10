@@ -46,6 +46,21 @@ class CollectionSerializerTest extends TestCase
     }
 
     /**
+     * Test for correct meta information when 'include_total_meta' is set.
+     */
+    public function testPaginatedCollectionWithTotal()
+    {
+        $this->app['config']->set('jsonapi.include_total_meta', true);
+
+        $users = factory(User::class, 5)->make();
+        $paginator = new LengthAwarePaginator($users->forPage(1, 2), $users->count(), 2);
+        $document = (new CollectionSerializer($paginator))->serializeToObject();
+
+        $this->assertArrayHasKey('meta', $document);
+        $this->assertEquals($users->count(), $document['meta']['total']);
+    }
+
+    /**
      * Test loading of included records.
      */
     public function testIncludedRecords()

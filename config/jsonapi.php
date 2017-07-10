@@ -75,4 +75,17 @@ return [
 
     'pagination_method' => 'page-based',
 
+    /*
+    |--------------------------------------------------------------------------
+    | Include total count for collections
+    |--------------------------------------------------------------------------
+    |
+    | Set whether the total number of items for a collection request should
+    | be included as a `total` property in the returned meta information. This
+    | is useful for displaying the total number of items in paginated listings.
+    |
+    */
+
+    'include_total_meta' => false,
+
 ];
