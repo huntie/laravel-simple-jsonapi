@@ -108,13 +108,15 @@ abstract class JsonApiSerializer implements JsonSerializable
      */
     public function serializeToObject(): array
     {
-        return array_filter([
-            'data' => $this->getPrimaryData(),
-            'included' => $this->getIncluded()->values()->toArray(),
-            'links' => $this->getLinks(),
-            'meta' => $this->meta,
-            'jsonapi' => $this->getDocumentMeta(),
-        ]);
+        return array_merge(
+            ['data' => $this->getPrimaryData()],
+            array_filter([
+                'included' => $this->getIncluded()->values()->toArray(),
+                'links' => $this->getLinks(),
+                'meta' => $this->meta,
+                'jsonapi' => $this->getDocumentMeta(),
+            ])
+        );
     }
 
     /**
