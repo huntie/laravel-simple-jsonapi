@@ -114,7 +114,7 @@ trait UpdatesModelRelations
             if ($this->getRelationType($name) === 'To-One') {
                 $record->{$name}()->associate(array_get($relationship, 'data.id'));
                 $record->save();
-            } else if ($this->getRelationType($relation) === 'To-Many') {
+            } else if ($this->getRelationType($name) === 'To-Many') {
                 $record->{$name}()->sync(array_pluck($relationship['data'], 'id'));
             }
         }
