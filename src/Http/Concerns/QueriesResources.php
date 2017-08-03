@@ -48,8 +48,7 @@ trait QueriesResources
                 // Boolean match
                 $query = $query->where($column, filter_var($value, FILTER_VALIDATE_BOOLEAN));
             } else {
-                // Partial string match
-                $query = $query->where($column, 'LIKE', '%' . $value . '%');
+                $query = $query->where($column, $value);
             }
         }
 
