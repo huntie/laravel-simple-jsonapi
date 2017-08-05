@@ -276,16 +276,12 @@ abstract class JsonApiController extends Controller
      * Validate the requested included relationships against those that are
      * allowed on the requested resource type.
      *
-     * @param array|null $relations
+     * @param array $relations
      *
      * @throws InvalidRelationPathException
      */
-    protected function validateIncludableRelations($relations)
+    protected function validateIncludableRelations(array $relations)
     {
-        if (is_null($relations)) {
-            return;
-        }
-
         foreach ($relations as $relation) {
             if (!$this->model instanceof IncludesRelatedResources || !in_array($relation, $this->model->getIncludableRelations())) {
                 throw new InvalidRelationPathException($relation);
