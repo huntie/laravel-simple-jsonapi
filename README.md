@@ -1,4 +1,6 @@
-# Laravel Simple JSON API
+![](./banner.png)
+
+# laravel-simple-jsonapi
 
 [![Build status](https://img.shields.io/scrutinizer/build/g/huntie/laravel-simple-jsonapi.svg?maxAge=60&style=flat-square)](https://scrutinizer-ci.com/g/huntie/laravel-simple-jsonapi/build-status/1.0.0-alpha)
 [![Code quality](https://img.shields.io/scrutinizer/g/huntie/laravel-simple-jsonapi.svg?maxAge=60&style=flat-square)](https://scrutinizer-ci.com/g/huntie/laravel-simple-jsonapi)
@@ -17,6 +19,12 @@ An implementation of the [JSON API](http://jsonapi.org/) specification for Larav
 - Formatting of error and request validation responses
 - Configurable options for includable relationships, pagination and more
 - Test assertion helpers
+
+## Installation
+
+    $ composer require huntie/laravel-simple-jsonapi
+
+See further installation and configuration details in the [wiki](https://github.com/huntie/laravel-simple-jsonapi/wiki/Installation).
 
 ## Documentation
 
