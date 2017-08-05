@@ -11,3 +11,10 @@ build:
     cache:
         directories:
             - 'vendor/'
+    tests:
+        override:
+            -
+                command: 'vendor/bin/phpunit --coverage-clover=clover.xml'
+                coverage:
+                    file: 'clover.xml'
+                    format: 'clover'
