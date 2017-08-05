@@ -16,6 +16,17 @@ trait ExampleRoutes
      */
     public function getEnvironmentSetup($app)
     {
+        $app['config']->set('jsonapi.model_namespace', 'Tests\Fixtures\Models');
+        $this->registerAppRoutes($app);
+    }
+
+    /**
+     * Register test application routes.
+     *
+     * @param \Illuminate\Foundation\Application $app
+     */
+    protected function registerAppRoutes($app)
+    {
         $app['router']->resource('users', UserController::class);
     }
 }
