@@ -9,7 +9,7 @@ $factory->define(Post::class, function (Generator $faker) {
     return [
         'id' => $faker->uuid,
         'title' => $faker->sentence(),
-        'content' => $faker->paragraphs(4),
+        'content' => '<p>' . implode('</p><p>', $faker->paragraphs(4)) . '</p>',
         'created_at' => $faker->dateTime(),
     ];
 });
