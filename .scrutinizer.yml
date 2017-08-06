@@ -5,6 +5,8 @@ build:
     environment:
         php:
             version: 7.0.10
+        postgresql: false
+        redis: false
     dependencies:
         override:
             - composer install
