@@ -64,8 +64,7 @@ class RelationshipIterator
             return $resolved;
         }
 
-        $relation = null;
-        [$relation, $path] = array_pad(explode('.', $path, 2), 2, null);
+        list($relation, $path) = array_pad(explode('.', $path, 2), 2, null);
 
         $resolved = $resolved->{$relation};
 
