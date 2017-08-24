@@ -60,13 +60,11 @@ class RelationshipIterator
      */
     private function iterate($resolved, $path)
     {
-        if (empty($path)) {
-            return $resolved;
-        }
-
         list($relation, $path) = array_pad(explode('.', $path, 2), 2, null);
 
-        $resolved = $resolved->{$relation};
+        if (empty($relation) || is_null($resolved = $resolved->{$relation})) {
+            return $resolved;
+        }
 
         if ($resolved instanceof Collection) {
             return $resolved->map(function ($record) use ($path) {
