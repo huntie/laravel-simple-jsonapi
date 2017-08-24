@@ -5,6 +5,7 @@ namespace Huntie\JsonApi\Support;
 use InvalidArgumentException;
 use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
 
 class RelationshipIterator
 {
@@ -28,7 +29,7 @@ class RelationshipIterator
      *
      * @throws InvalidArgumentException
      */
-    public function __construct($record, $path)
+    public function __construct($record, string $path)
     {
         if (!preg_match('/^([A-Za-z]+.?)+[A-Za-z]+$/', $path)) {
             throw new InvalidArgumentException('The relationship path must be a valid string');
@@ -41,18 +42,43 @@ class RelationshipIterator
     /**
      * Resolve the relationship from the primary record.
      *
-     * @throws InvalidRelationPathException
-     *
-     * @return \Illuminate\Support\Collection|Model|null
+     * @return Collection|Model|null
      */
     public function resolve()
     {
-        return array_reduce(explode('.', $this->path), function ($resolved, $relation) {
-            if (!$resolved instanceof Model || in_array($relation, $resolved->getHidden())) {
-                throw new InvalidRelationPathException($this->path);
-            }
+        return $this->iterate($this->record, $this->path);
+    }
 
-            return $resolved->{$relation};
-        }, $this->record);
+    /**
+     * Recursively iterate through a given relation path to return the resolved
+     * relationship value.
+     *
+     * @param Collection|Model|null $resolved
+     * @param string|null           $path
+     *
+     * @return Collection|Model|null
+     */
+    private function iterate($resolved, $path)
+    {
+        if (empty($path)) {
+            return $resolved;
+        }
+
+        $relation = null;
+        [$relation, $path] = array_pad(explode('.', $path, 2), 2, null);
+
+        $resolved = $resolved->{$relation};
+
+        if ($resolved instanceof Collection) {
+            return $resolved->map(function ($record) use ($path) {
+                return $this->iterate($record, $path);
+            });
+        }
+
+        if (!$resolved instanceof Model || in_array($relation, $resolved->getHidden())) {
+            throw new InvalidRelationPathException($this->path);
+        }
+
+        return $this->iterate($resolved, $path);
     }
 }
