@@ -239,7 +239,7 @@ abstract class JsonApiController extends Controller
             'fields' => $this->getRequestQuerySet($request, 'fields', '/^([A-Za-z]+.?)+[A-Za-z]+$/'),
             'include' => $this->getRequestQuerySet($request, 'include', '/^([A-Za-z]+.?)+[A-Za-z]+$/'),
             'sort' => $this->getRequestQuerySet($request, 'sort', '/[A-Za-z_]+/'),
-            'filter' => (array) json_decode($request->input('filter')),
+            'filter' => (array) json_decode(json_encode($request->input('filter'))),
         ];
     }
 
