@@ -96,14 +96,18 @@ class ResourceSerializerTest extends TestCase
         $user->posts = factory(Post::class, 2)->make();
         $user->comments = factory(Comment::class, 2)->make();
 
-        $serializer = new ResourceSerializer($user, [], ['posts', 'comments']);
+        foreach ($user->comments as $comment) {
+            $comment->creator = factory(User::class)->make();
+        }
+
+        $serializer = new ResourceSerializer($user, [], ['posts', 'comments', 'comments.creator']);
         $included = $serializer->getIncluded();
 
         $this->assertInstanceOf(Collection::class, $included);
-        $this->assertJsonApiObjectCollection(['data' => $included->toArray()], 4);
+        $this->assertJsonApiObjectCollection(['data' => $included->toArray()], 6);
 
         foreach ($included as $record) {
-            $this->assertRegExp('/posts|comments/', $record['type'], 'Unexpected record type included with resource');
+            $this->assertRegExp('/posts|comments|user/', $record['type'], 'Unexpected record type included with resource');
         }
     }
 
