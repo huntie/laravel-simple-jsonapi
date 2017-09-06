@@ -2,7 +2,7 @@
 
 namespace Huntie\JsonApi\Serializers;
 
-use Huntie\JsonApi\Support\RelationshipIterator;
+use Huntie\JsonApi\Exceptions\InvalidRelationPathException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -25,17 +25,21 @@ class RelationshipSerializer extends JsonApiSerializer
     /**
      * Create a new JSON API relationship serializer.
      *
-     * @param Model      $record The primary record
-     * @param string     $path   The path to the relation to serialize
-     * @param array|null $fields Subset of fields to return by record type
+     * @param Model      $record   The primary record
+     * @param string     $relation The name of the relation to serialize
+     * @param array|null $fields   Subset of fields to return by record type
      *
      * @throws InvalidRelationPathException
      */
-    public function __construct($record, $path, array $fields = [])
+    public function __construct($record, $relation, array $fields = [])
     {
         parent::__construct();
 
-        $this->relation = (new RelationshipIterator($record, $path))->resolve();
+        if (in_array($relation, $record->getHidden())) {
+            throw new InvalidRelationPathException($relation);
+        }
+
+        $this->relation = $record->{$relation};
         $this->fields = array_unique($fields);
     }
 
