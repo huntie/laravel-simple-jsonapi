@@ -14,41 +14,51 @@ class ResourceSerializer extends JsonApiSerializer
     protected $record;
 
     /**
-     * The record relationships to return.
-     *
-     * @var array
-     */
-    protected $relationships;
-
-    /**
-     * The subset of attributes to return on each record type.
+     * The subset of attributes to return on each resource type.
      *
      * @var array
      */
     protected $fields;
 
     /**
-     * The relationships to load and include.
+     * The relationship paths to match for included resources.
      *
      * @var array
      */
     protected $include;
 
     /**
+     * The named relationships to list against this resource.
+     *
+     * @var array
+     */
+    protected $relationships;
+
+    /**
      * Create a new JSON API resource serializer.
      *
-     * @param \Illuminate\Database\Eloquent\Model $record  The model instance to serialise
-     * @param array|null                          $fields  Subset of fields to return by record type
-     * @param array|null                          $include Relations to include
+     * @param \Illuminate\Database\Eloquent\Model $record        The model instance to serialise
+     * @param array|null                          $fields        The subset of fields to return on each resource type
+     * @param array|null                          $include       The paths of relationships to include
+     * @param array|null                          $relationships Additional named relationships to list
      */
-    public function __construct($record, array $fields = [], array $include = [])
+    public function __construct($record, array $fields = [], array $include = [], array $relationships = [])
     {
         parent::__construct();
 
         $this->record = $record;
-        $this->relationships = array_merge(array_keys($record->getRelations()), $include);
         $this->fields = array_unique($fields);
         $this->include = array_unique($include);
+
+        $this->relationships = array_unique(
+            array_merge(
+                $relationships,
+                array_keys($record->getRelations()),
+                array_map(function ($path) {
+                    return explode('.', $path, 2)[0];
+                }, $include)
+            )
+        );
     }
 
     /**

@@ -9,29 +9,37 @@ use Illuminate\Support\Collection;
 class RelationshipSerializer extends JsonApiSerializer
 {
     /**
-     * The loaded relation to transform.
+     * The resolved relation to transform.
      *
      * @var Collection|Model|null
      */
     protected $relation;
 
     /**
-     * The subset of attributes to return on each included record type.
+     * The subset of attributes to return on each resource type.
      *
      * @var array
      */
     protected $fields;
 
     /**
+     * The named relationships to list on the resolved resource(s).
+     *
+     * @var array
+     */
+    protected $relationships;
+
+    /**
      * Create a new JSON API relationship serializer.
      *
-     * @param Model      $record   The primary record
-     * @param string     $relation The name of the relation to serialize
-     * @param array|null $fields   Subset of fields to return by record type
+     * @param Model      $record        The primary record
+     * @param string     $relation      The name of the relation to serialize
+     * @param array|null $fields        The subset of fields to return on each resource type
+     * @param array|null $relationships The named relationships to list on the resolved resource(s)
      *
      * @throws InvalidRelationPathException
      */
-    public function __construct($record, $relation, array $fields = [])
+    public function __construct($record, $relation, array $fields = [], array $relationships = [])
     {
         parent::__construct();
 
@@ -41,6 +49,7 @@ class RelationshipSerializer extends JsonApiSerializer
 
         $this->relation = $record->{$relation};
         $this->fields = array_unique($fields);
+        $this->relationships = array_unique($relationships);
     }
 
     /**
