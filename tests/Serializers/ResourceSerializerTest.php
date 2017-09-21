@@ -3,6 +3,7 @@
 namespace Tests\Serializers;
 
 use Huntie\JsonApi\Serializers\ResourceSerializer;
+use Huntie\JsonApi\Testing\JsonApiAssertions;
 use Tests\TestCase;
 use Tests\Fixtures\Models\Comment;
 use Tests\Fixtures\Models\Post;
@@ -27,13 +28,11 @@ class ResourceSerializerTest extends TestCase
      */
     public function testToResourceIdentifier()
     {
-        $serializer = new ResourceSerializer(factory(User::class)->make());
-        $resource = $serializer->toResourceIdentifier();
+        $record = factory(User::class)->make();
+        $serializer = new ResourceSerializer($record);
+        $data = $serializer->toResourceIdentifier();
 
-        $this->assertInternalType('array', $resource);
-        $this->assertCount(2, $resource);
-        $this->assertArrayHasKey('type', $resource);
-        $this->assertArrayHasKey('id', $resource);
+        $this->assertJsonApiResourceIdentifier(compact('data'), 'users', $record->id);
     }
 
     /**
