@@ -141,7 +141,7 @@ class ResourceSerializer extends JsonApiSerializer
             }
         }
 
-        return $included->unique();
+        return $this->filterUnique($included);
     }
 
     /**
