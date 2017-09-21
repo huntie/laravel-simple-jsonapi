@@ -103,10 +103,14 @@ class ResourceSerializerTest extends TestCase
         $included = $serializer->getIncluded();
 
         $this->assertInstanceOf(Collection::class, $included);
-        $this->assertJsonApiObjectCollection(['data' => $included->toArray()], 6);
+        $this->assertCount(6, $included);
 
-        foreach ($included as $record) {
-            $this->assertRegExp('/posts|comments|user/', $record['type'], 'Unexpected record type included with resource');
+        $expected = array_flatten([$user->posts, $user->comments, $user->comments->pluck('creator')]);
+        $types = ['posts', 'posts', 'comments', 'comments', 'users', 'users'];
+
+        for ($i = 0; $i < count($included); $i++) {
+            $this->assertEquals($types[$i], $included[$i]['type']);
+            $this->assertEquals($expected[$i]->id, $included[$i]['id']);
         }
     }
 
