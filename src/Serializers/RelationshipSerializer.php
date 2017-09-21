@@ -74,7 +74,8 @@ class RelationshipSerializer extends JsonApiSerializer
     public function toResourceCollection()
     {
         return $this->map(function ($record) {
-            return (new ResourceSerializer($record, $this->fields))->toBaseResourceObject();
+            return (new ResourceSerializer($record, $this->fields, [], $this->relationships))
+                ->toResourceObject();
         });
     }
 
