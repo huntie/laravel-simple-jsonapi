@@ -136,6 +136,21 @@ abstract class JsonApiSerializer implements JsonSerializable
     }
 
     /**
+     * Reduce a collection of records to unique entries, by comparing their
+     * resource identifier values.
+     *
+     * @param \Illuminate\Support\Collection $records
+     *
+     * @return \Illuminate\Support\Collection
+     */
+    protected function filterUnique($records)
+    {
+        return $records->unique(function ($record) {
+            return implode(array_only($record, ['type', 'id']));
+        });
+    }
+
+    /**
      * Return JSON API implementation information.
      */
     private function getDocumentMeta(): array

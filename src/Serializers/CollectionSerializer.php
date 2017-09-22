@@ -15,27 +15,35 @@ class CollectionSerializer extends JsonApiSerializer
     protected $records;
 
     /**
-     * The subset of attributes to return on each record type.
+     * The subset of attributes to return on each resource type.
      *
      * @var array
      */
     protected $fields;
 
     /**
-     * The relationships to load and include.
+     * The relationship paths to match for included resources.
      *
      * @var array
      */
     protected $include;
 
     /**
+     * The additional named relationships to list against each resource.
+     *
+     * @var array
+     */
+    protected $relationships;
+
+    /**
      * Create a new JSON API collection serializer.
      *
-     * @param \Illuminate\Support\Collection|LengthAwarePaginator $records The collection of records to serialize
-     * @param array|null                                          $fields  Subset of fields to return by record type
-     * @param array|null                                          $include Relations to include
+     * @param \Illuminate\Support\Collection|LengthAwarePaginator $records       The collection of records to serialise
+     * @param array|null                                          $fields        The subset of fields to return on each resource type
+     * @param array|null                                          $include       The paths of relationships to include
+     * @param array|null                                          $relationships Additional named relationships to list
      */
-    public function __construct($records, array $fields = [], array $include = [])
+    public function __construct($records, array $fields = [], array $include = [], array $relationships = [])
     {
         parent::__construct();
 
@@ -49,6 +57,7 @@ class CollectionSerializer extends JsonApiSerializer
 
         $this->fields = array_unique($fields);
         $this->include = array_unique($include);
+        $this->relationships = array_unique($relationships);
     }
 
     /**
@@ -59,7 +68,8 @@ class CollectionSerializer extends JsonApiSerializer
     public function toResourceCollection()
     {
         return $this->records->map(function ($record) {
-            return (new ResourceSerializer($record, $this->fields, $this->include))->toResourceObject();
+            return (new ResourceSerializer($record, $this->fields, $this->include, $this->relationships))
+                ->toResourceObject();
         });
     }
 
@@ -86,12 +96,12 @@ class CollectionSerializer extends JsonApiSerializer
 
         foreach ($this->records as $record) {
             $included = $included->merge(
-                (new ResourceSerializer($record, $this->fields, $this->include))
+                (new ResourceSerializer($record, $this->fields, $this->include, $this->relationships))
                     ->getIncluded()
             );
         }
 
-        return $included->unique();
+        return $this->filterUnique($included);
     }
 
     /**
