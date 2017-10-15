@@ -3,6 +3,7 @@
 namespace Tests\Serializers;
 
 use Huntie\JsonApi\Serializers\ResourceSerializer;
+use Huntie\JsonApi\Testing\JsonApiAssertions;
 use Tests\TestCase;
 use Tests\Fixtures\Models\Comment;
 use Tests\Fixtures\Models\Post;
@@ -27,13 +28,11 @@ class ResourceSerializerTest extends TestCase
      */
     public function testToResourceIdentifier()
     {
-        $serializer = new ResourceSerializer(factory(User::class)->make());
-        $resource = $serializer->toResourceIdentifier();
+        $record = factory(User::class)->make();
+        $serializer = new ResourceSerializer($record);
+        $data = $serializer->toResourceIdentifier();
 
-        $this->assertInternalType('array', $resource);
-        $this->assertCount(2, $resource);
-        $this->assertArrayHasKey('type', $resource);
-        $this->assertArrayHasKey('id', $resource);
+        $this->assertJsonApiResourceIdentifier(compact('data'), 'users', $record->id);
     }
 
     /**
@@ -96,14 +95,22 @@ class ResourceSerializerTest extends TestCase
         $user->posts = factory(Post::class, 2)->make();
         $user->comments = factory(Comment::class, 2)->make();
 
-        $serializer = new ResourceSerializer($user, [], ['posts', 'comments']);
+        foreach ($user->comments as $comment) {
+            $comment->creator = factory(User::class)->make();
+        }
+
+        $serializer = new ResourceSerializer($user, [], ['posts', 'comments', 'comments.creator']);
         $included = $serializer->getIncluded();
 
         $this->assertInstanceOf(Collection::class, $included);
-        $this->assertJsonApiObjectCollection(['data' => $included->toArray()], 4);
+        $this->assertCount(6, $included);
 
-        foreach ($included as $record) {
-            $this->assertRegExp('/posts|comments/', $record['type'], 'Unexpected record type included with resource');
+        $expected = array_flatten([$user->posts, $user->comments, $user->comments->pluck('creator')]);
+        $types = ['posts', 'posts', 'comments', 'comments', 'users', 'users'];
+
+        for ($i = 0; $i < count($included); $i++) {
+            $this->assertEquals($types[$i], $included[$i]['type']);
+            $this->assertEquals($expected[$i]->id, $included[$i]['id']);
         }
     }
 

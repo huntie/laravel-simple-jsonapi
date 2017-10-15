@@ -62,7 +62,7 @@ class JsonApiSerializerTest extends TestCase
     public function testAddLinks()
     {
         $serializer = new ResourceSerializer(factory(User::class)->make());
-        $serializer->setBaseUrl('http://localhost/users'); // TODO path joining logic
+        $serializer->setBaseUrl('http://localhost/users');
         $serializer->addLinks([
             'next' => '?page[number]=2',
             'posts' => '/posts',

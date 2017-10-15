@@ -14,41 +14,51 @@ class ResourceSerializer extends JsonApiSerializer
     protected $record;
 
     /**
-     * The record relationships to return.
-     *
-     * @var array
-     */
-    protected $relationships;
-
-    /**
-     * The subset of attributes to return on each record type.
+     * The subset of attributes to return on each resource type.
      *
      * @var array
      */
     protected $fields;
 
     /**
-     * The relationships to load and include.
+     * The relationship paths to match for included resources.
      *
      * @var array
      */
     protected $include;
 
     /**
+     * The named relationships to list against this resource.
+     *
+     * @var array
+     */
+    protected $relationships;
+
+    /**
      * Create a new JSON API resource serializer.
      *
-     * @param \Illuminate\Database\Eloquent\Model $record  The model instance to serialise
-     * @param array|null                          $fields  Subset of fields to return by record type
-     * @param array|null                          $include Relations to include
+     * @param \Illuminate\Database\Eloquent\Model $record        The model instance to serialise
+     * @param array|null                          $fields        The subset of fields to return on each resource type
+     * @param array|null                          $include       The paths of relationships to include
+     * @param array|null                          $relationships Additional named relationships to list
      */
-    public function __construct($record, array $fields = [], array $include = [])
+    public function __construct($record, array $fields = [], array $include = [], array $relationships = [])
     {
         parent::__construct();
 
         $this->record = $record;
-        $this->relationships = array_merge(array_keys($record->getRelations()), $include);
         $this->fields = array_unique($fields);
         $this->include = array_unique($include);
+
+        $this->relationships = array_unique(
+            array_merge(
+                $relationships,
+                array_keys($record->getRelations()),
+                array_map(function ($path) {
+                    return explode('.', $path, 2)[0];
+                }, $include)
+            )
+        );
     }
 
     /**
@@ -120,18 +130,38 @@ class ResourceSerializer extends JsonApiSerializer
     {
         $included = collect();
 
-        foreach ($this->include as $relation) {
-            $records = (new RelationshipSerializer($this->record, $relation, $this->fields))
-                ->toResourceCollection();
+        foreach ($this->getIncludePaths() as $path) {
+            $resolved = $this->record;
 
-            if ($records instanceof Collection) {
-                $included = $included->merge($records);
-            } else if (!empty($records)) {
-                $included->push($records);
+            if (!($resolved instanceof Collection)) {
+                $resolved = collect([$resolved])->filter();
+            }
+
+            while (!empty($path)) {
+                list($relation, $path) = array_pad(explode('.', $path, 2), 2, null);
+                $nextRelation = preg_replace('/\..*/', '', $path);
+
+                foreach ($resolved as $record) {
+                    $records = (new RelationshipSerializer($record, $relation, $this->fields, array_filter([$nextRelation])))
+                        ->toResourceCollection();
+
+                    if ($records instanceof Collection) {
+                        $included = $included->merge($records);
+                    } else if (!empty($records)) {
+                        $included->push($records);
+                    }
+                }
+
+                $resolved = $resolved
+                    ->map(function ($record) use ($relation) {
+                        return $record->{$relation};
+                    })
+                    ->flatten()
+                    ->filter();
             }
         }
 
-        return $included->unique();
+        return $this->filterUnique($included);
     }
 
     /**
@@ -168,6 +198,22 @@ class ResourceSerializer extends JsonApiSerializer
         $fields = array_get($this->fields, $this->getResourceType());
 
         return is_array($fields) ? $fields : preg_split('/,/', $fields, null, PREG_SPLIT_NO_EMPTY);
+    }
+
+    /**
+     * Return the deepest relationship paths that should be used to resolve
+     * all included relations.
+     */
+    protected function getIncludePaths(): array
+    {
+        return array_diff(
+            $this->include,
+            array_filter(array_map(function ($path) {
+                preg_match('/(.*)\..+$/', $path, $matches);
+
+                return $matches[1] ?? null;
+            }, $this->include))
+        );
     }
 
     /**

@@ -28,25 +28,38 @@ trait JsonApiAssertions
     /**
      * Assert that an array contains a valid JSON API resource identifier.
      *
-     * @param array $array
+     * @param array       $array
+     * @param string|null $type
+     * @param mixed       $id
      *
      * @throws PHPUnit_Framework_AssertionFailedError
      */
-    public function assertJsonApiResourceIdentifier(array $array)
+    public function assertJsonApiResourceIdentifier(array $array, string $type = null, $id = null)
     {
         $this->assertArrayHasAll(['data.type', 'data.id'], $array);
+
+        if ($type) {
+            $this->assertEquals(array_get($array, 'data.type'), $type);
+        }
+
+        if ($id) {
+            $this->assertEquals(array_get($array, 'data.id'), $id);
+        }
     }
 
     /**
      * Assert that an array contains a valid JSON API resource object.
      *
-     * @param array $array
+     * @param array       $array
+     * @param string|null $type
+     * @param mixed       $id
      *
      * @throws PHPUnit_Framework_AssertionFailedError
      */
-    public function assertJsonApiResourceObject(array $array)
+    public function assertJsonApiResourceObject(array $array, string $type = null, $id = null)
     {
-        $this->assertArrayHasAll(['data.type', 'data.id', 'data.attributes'], $array);
+        $this->assertJsonApiResourceIdentifier($array, $type, $id);
+        $this->assertInternalType('array', array_get($array, 'data.attributes'));
     }
 
     /**
