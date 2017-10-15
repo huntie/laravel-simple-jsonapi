@@ -36,7 +36,8 @@
         "orchestra/database": "^3.4.0",
         "orchestra/testbench": "^3.0.0",
         "doctrine/dbal": "^2.5.0",
-        "fzaninotto/faker": "^1.6.0"
+        "fzaninotto/faker": "^1.6.0",
+        "whatthejeff/nyancat-phpunit-resultprinter": "^1.2"
     },
     "autoload": {
         "psr-4": {
